@@ -1,0 +1,104 @@
+{
+  "schema_version": "0.1",
+  "phase": "020_architecture",
+  "mode": "INICIO",
+  "execution_status": "EXECUTION_COMPLETE",
+  "based_on_roadmap": {
+    "version": 1,
+    "sha256": "d232d5b3eb7e6faa0633eb9d3e7b69a01f80e5be61fc38bf4d8a0bba1c601d03"
+  },
+  "orchestration_plan": {
+    "workers": [
+      {
+        "worker": "architecture-adapter",
+        "order": 1,
+        "inputs": [
+          "010_discovery/deliverables/roadmap-manifest.json",
+          "010_discovery/deliverables/slices/*.md",
+          "900_documents/architecture/stack_tec.md",
+          "900_documents/architecture/architecture_style.md",
+          "900_documents/architecture/design_system.md",
+          "900_documents/brand.md"
+        ],
+        "expected_output": "020_architecture/deliverables/effective_config.md"
+      },
+      {
+        "worker": "scaffold-builder",
+        "order": 2,
+        "inputs": [
+          "020_architecture/deliverables/effective_config.md (firmado CP-01g)",
+          "900_documents/architecture/stack_tec.md",
+          "900_documents/architecture/architecture_style.md",
+          "900_documents/architecture/design_system.md"
+        ],
+        "expected_output": "scaffold en la raíz + 020_architecture/deliverables/scaffold_report.md"
+      },
+      {
+        "worker": "governance-weaver",
+        "order": 3,
+        "inputs": [
+          "scaffold en la raíz",
+          "020_architecture/deliverables/effective_config.md",
+          "020_architecture/deliverables/scaffold_report.md",
+          "900_documents/architecture/architecture_style.md"
+        ],
+        "expected_output": "policía + seguridad + CI + .clinerules + 020_architecture/deliverables/policy_verification.md"
+      }
+    ]
+  },
+  "checkpoints": {
+    "CP-00": { "reached": true, "roadmap_sha256": "d232d5b3eb7e6faa0633eb9d3e7b69a01f80e5be61fc38bf4d8a0bba1c601d03", "roadmap_version": 1, "mode": "INICIO" },
+    "CP-01": { "reached": true, "effective_config_path": "020_architecture/deliverables/effective_config.md", "open_decisions": ["D-A", "D-G", "D-N", "D-C", "ESC-1", "DEC-01", "DEC-02"] },
+    "CP-01g": { "reached": true, "decisions_closed": { "auth": "jwt_backend", "orm_mode": "estricto", "topology": "plano", "stack_edge_optin": [], "escapes": [], "project_decisions": { "DEC-01_completed_transition": "derived_on_read", "DEC-02_evol03_notification": "deferred_to_evol-03" } }, "approved_in_nl_at": "2026-06-25T18:00:29Z" },
+    "CP-02": { "reached": true, "scaffold_report_path": "020_architecture/deliverables/scaffold_report.md", "scaffold_inventory": ["backend/.python-version", "backend/alembic.ini", "backend/alembic/env.py", "backend/alembic/versions/.gitkeep", "backend/pyproject.toml", "backend/src/__init__.py", "backend/src/application/__init__.py", "backend/src/domain/__init__.py", "backend/src/infrastructure/__init__.py", "backend/src/interface/__init__.py", "backend/tests/__init__.py", "backend/uv.lock", "frontend/.dependency-cruiser.cjs", "frontend/app/.gitkeep", "frontend/app/layout.tsx", "frontend/app/page.tsx", "frontend/eslint.config.mjs", "frontend/next.config.ts", "frontend/package-lock.json", "frontend/package.json", "frontend/src/components/ui/.gitkeep", "frontend/src/features/.gitkeep", "frontend/src/lib/.gitkeep", "frontend/src/styles/globals.css", "frontend/tsconfig.json", "docker-compose.yml", ".env.example", ".gitignore", ".github/.gitkeep"], "env_boots": true },
+    "CP-03": { "reached": true, "manifest_path": "020_architecture/deliverables/architecture-manifest.json", "policy_verification_path": "020_architecture/deliverables/policy_verification.md", "manifest_sha256": "026827ac8ee1d0cb85ce74f4687fdf1f15b27b553ba78aa008af58698f268765" },
+    "CP-03r": { "reached": false, "requested_adjustments": [], "reworked_workers": [] },
+    "CP-04": { "reached": true, "approved_at": "2026-06-25T19:04:41Z" }
+  },
+  "decisions_closed": {
+    "auth": "jwt_backend",
+    "orm_mode": "estricto",
+    "topology": "plano",
+    "stack_edge_optin": [],
+    "escapes": []
+  },
+  "rework_loop": {
+    "iterations": 0,
+    "max_iterations": 2,
+    "history": []
+  },
+  "change_request": {
+    "active": false,
+    "trigger_roadmap_version": null,
+    "strategy": null,
+    "impact_report_path": null,
+    "added": [],
+    "unchanged": [],
+    "requested_at": null
+  },
+  "timing": {
+    "started_at": "2026-06-25T17:48:16Z",
+    "completed_at": "2026-06-25T19:05:33Z",
+    "per_worker": [
+      { "agent": "architecture-orchestrator", "started_at": "2026-06-25T17:50:14Z", "ended_at": "2026-06-25T17:51:14Z" },
+      { "agent": "architecture-adapter", "started_at": "2026-06-25T17:51:45Z", "ended_at": "2026-06-25T17:55:27Z" },
+      { "agent": "scaffold-builder", "started_at": "2026-06-25T18:00:55Z", "ended_at": "2026-06-25T18:10:58Z" },
+      { "agent": "governance-weaver", "started_at": "2026-06-25T18:11:33Z", "ended_at": "2026-06-25T18:27:21Z" },
+      { "agent": "architecture-evaluator", "started_at": "2026-06-25T19:05:33Z", "ended_at": "2026-06-25T19:09:01Z" }
+    ],
+    "human_interactions": [
+      { "context": "decision_gate", "started_at": "2026-06-25T17:57:08Z", "ended_at": "2026-06-25T18:00:29Z" },
+      { "context": "sign_gate", "started_at": "2026-06-25T18:28:50Z", "ended_at": "2026-06-25T19:04:41Z" }
+    ]
+  },
+  "durability": {
+    "resumptions": [],
+    "context_resets": 0,
+    "suspensions": [],
+    "restarts": 0
+  },
+  "last_checkpoint": "CP-04",
+  "sprint_contract_path": "020_architecture/contract/sprint_contract.md",
+  "project_progress_path": "020_architecture/project-progress.txt",
+  "updated_at": "2026-06-25T22:03:00Z"
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": "0.1",
+  "phase": "020_architecture",
+  "mode": "INICIO",
+  "verdict": "APPROVED",
+  "scores": {
+    "D1_fidelidad_scaffold": 1.0,
+    "D2_policia_verificado": 1.0,
+    "D3_entorno_sano": 1.0,
+    "D4_linea_base_seguridad": 0.8,
+    "D5_manual_agente": 1.0,
+    "D6_design_system": 1.0,
+    "D7_firma_humana": 1.0,
+    "D8_integridad_cambio": null
+  },
+  "average": 0.97,
+  "gate_pass": true,
+  "veto_triggered": false,
+  "veto_reason": null,
+  "verification_reproduced": {
+    "policy_blocks": true,
+    "sqli_blocked": true,
+    "env_boots": true
+  },
+  "reasons": [
+    "D1 (1.0): El scaffold en disco corresponde exactamente al estilo efectivo firmado clean_hexagonal_4 / topologia PLANO: backend/src/{domain,application,infrastructure,interface} + frontend app/ + src/{features,components/ui,lib} + styles/globals.css. Verifique los 30 paths del scaffold_inventory[]: existen. Vacio de logica de negocio confirmado (todos los __init__.py = 0 bytes; layout.tsx/page.tsx son marcadores). orm_mode=estricto coherente con effective_style.orm_mapping=strict. 9 piezas descartadas por E4 (pgvector, FTS, pagos, correo, redis, arq/celery, pyright, biome, sentry): no se andamio de mas.",
+    "D2 (1.0): Policia re-verificado por C con cerebro fresco (D-032). Inyecte domain->infrastructure en src/domain/__init__.py y 'uv run lint-imports' FALLO (exit 1, 2 contratos BROKEN: layers + domain puro); revertido a 0 bytes -> exit 0, 4 contratos KEPT. import-linter: 4 contratos (layers + 3 forbidden) sobre root_package=src con include_external_packages. dependency-cruiser: 5 reglas (no-cross-feature, ui-no-features, lib-no-features, no-circular, no-orphans). Topologia PLANO: no requiere contratos inter-modulo. Job CI 'policy' SIN continue-on-error -> rompe el build.",
+    "D3 (1.0): Entorno sano. Re-verifique imports backend (fastapi 0.137.1 / sqlalchemy / pydantic / alembic / structlog -> exit 0) y 'docker compose config' -> exit 0 (postgres 18.4). El reporte documenta uv sync OK (63 paquetes), npm install OK (0 vulnerabilidades tras corregir Playwright 1.61.0 y postcss 8.5.10), tsc --noEmit exit 0. env_boots=true. next build no corrido (scaffold vacio, sin .env): aceptable, tsc cubre la compilacion TS.",
+    "D4 (0.8): Ancla anti-SQLi re-verificada por C (D-032): inyecte SQL crudo por f-string en src/application/__init__.py y 'uv run ruff check' FALLO (exit 1, S608); revertido a 0 bytes -> 'ruff check src/' exit 0. S608 confinado por per-file-ignore SOLO al adaptador firmado src/infrastructure/persistence/raw_sql.py. Vector 6 (higiene deps) verificado. TOPE <= 0.8: 4 vectores quedan configurados-no-verificados con codigo corriendo (vector 2 validacion pydantic/zod, vector 3 secretos/gitleaks no ejecutable localmente, vector 4 authz Depends, vector 5 headers/CORS — el lint react/no-danger si esta demostrado). Job CI 'security' SIN continue-on-error.",
+    "D5 (1.0): .clinerules presente (13655 bytes), coherente con el policia y el estilo. 7 secciones accionables para arneses 3-6: disciplina de capas + tabla de imports, modelado ESTRICTO (3 representaciones, dataclasses, UoW), los 6 vectores de seguridad como reglas, reglas frontend, tabla de comandos/jobs CI que rompen el build, convenciones de nombres, decisiones firmadas.",
+    "D6 (1.0): Design system en frontend/src/styles/globals.css (8282 bytes): tokens semanticos en OKLCH para modo claro (:root) y oscuro (.dark), @custom-variant dark, @theme inline de mapeo, @media prefers-reduced-motion. Fuente=default (brand.md sin tocar) -> L0 sobrio neutro. Piso WCAG AA documentado y plausible (fg/bg ~18:1, muted-foreground ~4.6:1 claro / ~4.8:1 oscuro, por encima de 4.5:1).",
+    "D7 (1.0): Firma humana integra. architecture-manifest.json approved=true, signed_at 2026-06-25T19:04:41Z. harness-state.approvals[] tiene la entrada de 020 (manifest v1) firmada por el humano. INTEGRIDAD verificada (D-039): sha256 del manifest CONSOLIDADO en disco = 8cf5df1e...7c40 == approvals[].manifest_hash (hash de record) -> el artefacto firmado no se altero tras la firma. Decisiones cerradas en CP-01g: D-A=jwt_backend, D-G=estricto, D-N=plano, D-C=piso estable, ESC-1 rechazado, DEC-01 derived_on_read, DEC-02 diferido a evol-03.",
+    "D8 (N/A): Modo INICIO -> D8 no aplica (null). No hay impact_report.md ni change_log[]."
+  ],
+  "recommendations": [
+    "D4: en arneses 030/050, materializar y verificar con captura real los vectores hoy configurados-no-verificados para levantar D4 a 1.0: validacion de entrada (Pydantic en interface + Zod en features), authz (Depends() en application), security headers/CORS restrictivos en el app factory FastAPI, y ejecutar gitleaks en CI (no disponible localmente).",
+    "D4/CI: confirmar en el primer push a GitHub que los jobs 'security' (gitleaks-action@v2) y 'policy' efectivamente rompen el build en Actions, ya que gitleaks no es ejecutable localmente sin token.",
+    "D3: al poblar .env.local en arneses posteriores, correr 'next build' completo para cerrar la verificacion de bundling de produccion (hoy solo cubierta por tsc --noEmit)."
+  ],
+  "failed_workers": [],
+  "evaluated_at": "2026-06-25T19:07:52Z"
+}

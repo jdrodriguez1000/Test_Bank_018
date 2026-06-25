@@ -1,0 +1,298 @@
+# .clinerules — Manual de gobernanza para agentes (Arnés 030–060)
+# Producido por: governance-weaver (CP-03) · Proyecto: Reservas Sala Comunitaria
+# Verificado contra: architecture_style.md §2.2/§2.4/§3 + effective_config.md CP-01g
+#
+# Este archivo es el contrato accionable que los agentes de los arneses 3–6
+# (Contract & Mold, Tactical Planning, Execution, Validation) DEBEN respetar.
+# El policía (import-linter + dependency-cruiser + Ruff) y el CI (.github/workflows/ci.yml)
+# hacen cumplir estas reglas automáticamente: una violación ROMPE EL BUILD.
+#
+# Lectura obligatoria antes de escribir cualquier línea de código.
+
+---
+
+## 1. Disciplina de capas (backend) — §2.2
+
+### 1.1 La regla de dependencia hacia adentro
+
+Las dependencias entre capas apuntan SIEMPRE hacia el interior:
+
+  interface → infrastructure → application → domain
+
+`domain` es el núcleo; no conoce nada externo. `interface` es la frontera con el mundo.
+
+```
+LEGAL:
+  interface  puede importar  infrastructure, application, domain
+  infrastructure  puede importar  application, domain
+  application  puede importar  domain
+  domain  no puede importar NADA de las otras capas
+
+ILEGAL (rompe el build):
+  domain → application / infrastructure / interface   ← §2.2
+  application → infrastructure / interface            ← §2.2
+  infrastructure → interface                          ← §2.2
+```
+
+### 1.2 Qué puede importar cada capa
+
+| Capa | Puede importar | NUNCA importa |
+|------|----------------|---------------|
+| `src/domain/` | nada externo (stdlib pura) | fastapi, sqlalchemy, pydantic, otras capas |
+| `src/application/` | `src.domain` + stdlib | `src.infrastructure`, `src.interface`, fastapi, sqlalchemy |
+| `src/infrastructure/` | `src.domain`, `src.application`, sqlalchemy, pydantic | `src.interface` |
+| `src/interface/` | `src.domain`, `src.application`, fastapi, pydantic | (solo el composition root toca infrastructure) |
+
+### 1.3 Composition root — única excepción
+
+El wiring de inyección de dependencias vive en `src/interface/` (módulo de composición,
+e.g., `src/interface/container.py` o `src/interface/dependencies.py`). Es la ÚNICA zona
+donde `interface` puede tocar `infrastructure` para cablear puertos con adaptadores.
+
+Fuera del composition root, `interface` NO importa `infrastructure` directamente.
+
+El módulo de composición debe estar documentado y ser mínimo (solo cablear, sin lógica).
+
+### 1.4 El policía que hace cumplir las capas
+
+- Herramienta: **import-linter** (`backend/pyproject.toml [tool.importlinter]`)
+- 4 contratos activos: `layers`, `domain puro`, `application sin infra/interface`, `infra no depende de interface`
+- Comando: `uv run lint-imports` (desde `backend/`)
+- En CI: job `policy` — falla el build ante cualquier violación
+
+---
+
+## 2. Estilo de modelado (D-G = ESTRICTO) — §5
+
+### 2.1 Tres representaciones separadas (invariante)
+
+Cada frontera tiene SU PROPIA representación. NUNCA reutilices el modelo ORM como
+entidad de dominio ni el schema Pydantic como DTO de dominio.
+
+```
+Schema Pydantic (src/interface/)    ← solo para request/response HTTP
+          ↕ mapeo explícito (mapper)
+Entidad de dominio (src/domain/)    ← dataclass pura, sin herencias de framework
+          ↕ mapeo explícito (repositorio)
+Modelo ORM SQLAlchemy (src/infrastructure/)  ← solo para persistencia
+```
+
+### 2.2 Entidades de dominio = dataclasses puras
+
+```python
+# CORRECTO (src/domain/reserva.py)
+from dataclasses import dataclass
+from uuid import UUID
+from datetime import date
+
+@dataclass
+class Reserva:
+    id: UUID
+    apartamento_id: UUID
+    fecha: date
+    estado: str  # o un Enum/VO
+
+# INCORRECTO — NO heredes de BaseModel (Pydantic), DeclarativeBase (SQLAlchemy), etc.
+```
+
+- La validación de invariantes de negocio vive en VALUE OBJECTS del dominio, no en Pydantic.
+- Pydantic se reserva exclusivamente para `src/interface/` (schemas de API) y `src/application/`
+  (pydantic-settings para configuración de Settings).
+
+### 2.3 Repositorios confinados a infrastructure
+
+- Los repositorios (implementaciones SQLAlchemy) viven SOLO en `src/infrastructure/`.
+- El dominio define la INTERFAZ del repositorio (puerto), nunca su implementación.
+- El repositorio es responsable del mapeo ORM ↔ entidad de dominio.
+
+```python
+# CORRECTO (src/domain/ports.py)
+from abc import ABC, abstractmethod
+from .reserva import Reserva
+
+class ReservaRepository(ABC):
+    @abstractmethod
+    def get_by_id(self, id: UUID) -> Reserva | None: ...
+
+# CORRECTO (src/infrastructure/reserva_repo.py)
+from src.domain.ports import ReservaRepository
+from src.domain.reserva import Reserva
+# Usa sqlalchemy aquí; mapea ORM ↔ Reserva
+```
+
+### 2.4 Unit of Work
+
+Una sesión SQLAlchemy por caso de uso (en `src/application/`). Commit/rollback atómico.
+No uses `Session.commit()` en el repositorio directamente; que lo haga el caso de uso.
+
+---
+
+## 3. Línea base de seguridad — §2.4 (6 vectores — NO violar)
+
+### Vector 1 — SQL Injection (ANCLA D4)
+
+**SQL crudo (f-strings, concatenación, `sqlalchemy.text()`) SOLO en el adaptador firmado:**
+  `src/infrastructure/persistence/raw_sql.py`
+
+En CUALQUIER otro módulo, `ruff check` detecta S608 y ROMPE EL BUILD.
+
+```python
+# PROHIBIDO (en application, interface, domain, o cualquier otro infra)
+query = f"SELECT * FROM users WHERE id = {user_id}"  # S608 → build roto
+
+# CORRECTO — usa ORM con parámetros ligados
+stmt = select(UserModel).where(UserModel.id == user_id)
+
+# CORRECTO — solo en src/infrastructure/persistence/raw_sql.py (per-file-ignore S608)
+result = conn.execute(text("SELECT * FROM ..."), {"param": value})
+```
+
+### Vector 2 — Validación de entrada
+
+- **Backend:** TODA entrada que llega por HTTP se valida con un schema **Pydantic** en
+  `src/interface/` ANTES de llegar al caso de uso. El dominio NO recibe dicts crudos.
+- **Frontend:** TODA entrada de formulario usa un schema **Zod** en la feature (`src/features/<feat>/schemas.ts`)
+  ANTES de enviarse al backend.
+- Nunca pases `request.body` sin validar directamente a un caso de uso.
+
+### Vector 3 — Gestión de secretos
+
+- **CERO secretos en el código fuente.** Ni en Python, ni en TypeScript, ni en YAML de CI.
+- La configuración del backend usa **pydantic-settings** leyendo variables de entorno o `.env`.
+- `.env` está en `.gitignore` — NUNCA lo commitees.
+- El pre-commit hook (`gitleaks`) y el job CI `security` escanean por secretos antes de merges.
+- Para tests en CI, usa secretos de test obviamente ficticios (no reutilices el `.env` de producción).
+
+### Vector 4 — AuthN/Z (D-A = jwt_backend)
+
+- **AuthN:** JWT propio del backend (passlib/bcrypt). El token se genera y verifica SOLO en el backend.
+- **AuthZ:** los chequeos de rol/scope se hacen mediante `Depends()` en la **capa de aplicación**
+  (`src/application/`), NO en los routers de `interface` ni en el frontend.
+- El frontend NUNCA toma decisiones de acceso basadas solo en el contenido del token JWT local
+  (el backend siempre verifica; el frontend solo usa el token para enviar, no para decidir).
+- Puerto de identidad (verificación del JWT, carga del usuario): `src/application/auth_service.py`
+  (convención — créalo aquí en Arnés 050).
+
+### Vector 5 — XSS / headers / CORS
+
+- **Frontend:** NUNCA uses `dangerouslySetInnerHTML`. ESLint tiene regla activa; build roto si aparece.
+- **Backend:** el app FastAPI configura CORS restrictivo (no `*`) usando `CORSMiddleware` en el
+  startup de `src/interface/`. Solo orígenes declarados en Settings (variable de entorno `CORS_ORIGINS`).
+- **Security headers:** el backend añade `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`
+  y `Content-Security-Policy` básico vía middleware o las respuestas de FastAPI.
+- NO pongas `Access-Control-Allow-Origin: *` en producción.
+
+### Vector 6 — Higiene de dependencias
+
+- **Lockfiles commiteados:** `backend/uv.lock` y `frontend/package-lock.json` SIEMPRE en git.
+- **Antes de mergear:** el job CI `security` corre `pip-audit` (backend) y `npm audit --audit-level=high`
+  (frontend). CVE de severidad alta → build roto → no mergear.
+- **deptry** (backend): detecta imports de paquetes no declarados en `pyproject.toml` (DEP001/003/004).
+  DEP002 está suprimido en scaffold; activar en Arnés 050.
+- **No añadas deps sin justificación.** Cada nueva dependencia amplía la superficie de ataque.
+
+---
+
+## 4. Reglas del frontend — §3
+
+### 4.1 Estructura de features (modular por features)
+
+```
+frontend/
+  app/                     # App Router — rutas, layouts (React Server Components por defecto)
+  src/
+    features/<feature>/    # co-localización: components, hooks, api-client, schemas Zod, types
+    components/ui/          # shadcn/ui — primitivos compartidos SIN estado de negocio
+    lib/                    # cliente HTTP, config TanStack Query, utilidades compartidas
+```
+
+### 4.2 Reglas de importación (dependency-cruiser)
+
+```
+LEGAL:
+  feature → components/ui, lib (import hacia arriba)
+  feature → sus propios archivos internos
+
+ILEGAL (rompe el build — job "policy"):
+  feature A → feature B (no-cross-feature)
+  components/ui → features (ui-no-features)
+  lib → features (lib-no-features)
+  cualquier ciclo circular (no-circular)
+```
+
+Si dos features necesitan compartir lógica, extráela a `src/lib/` o crea un hook compartido ahí.
+
+### 4.3 Server vs Client Components
+
+- Por defecto: **Server Components** (fetch en servidor, sin bundle JS al cliente).
+- `"use client"` SOLO cuando haya interactividad real (hooks de estado/efecto, event handlers).
+- No uses `"use client"` por defecto en todos los componentes.
+
+### 4.4 Fetching de datos
+
+- TanStack Query (`useQuery`, `useMutation`) para datos del cliente (calendario, "mis reservas").
+- Invalidar queries después de mutations para mantener consistencia (stab-03).
+
+---
+
+## 5. Cómo el policía y el CI hacen cumplir estas reglas
+
+| Regla | Herramienta | Comando local | Job CI |
+|-------|-------------|---------------|--------|
+| Capas backend | import-linter | `cd backend && uv run lint-imports` | `policy` |
+| Capas frontend | dependency-cruiser | `cd frontend && npx depcruise src app --config .dependency-cruiser.cjs` | `policy` |
+| SQL crudo fuera del adaptador | Ruff S608 | `cd backend && uv run ruff check .` | `lint` |
+| Lint estilo backend | Ruff | `cd backend && uv run ruff check .` | `lint` |
+| Lint estilo frontend | ESLint | `cd frontend && npx eslint .` | `lint` |
+| Type check backend | mypy | `cd backend && uv run mypy src` | `type-check` |
+| Type check frontend | tsc | `cd frontend && npx tsc --noEmit` | `type-check` |
+| CVEs backend | pip-audit | `cd backend && uv run pip-audit` | `security` |
+| CVEs frontend | npm audit | `cd frontend && npm audit --audit-level=high` | `security` |
+| Deps declaradas/usadas | deptry | `cd backend && uv run deptry src` | `security` |
+| Secretos en código | gitleaks | (pre-commit hook) | `security` |
+| Tests backend | pytest | `cd backend && uv run pytest` | `test` |
+
+### Jobs que ROMPEN EL BUILD (sin continue-on-error):
+- `policy` — violación de capa o regla de frontera frontend
+- `security` — CVE conocida, dep insegura, secreto detectado
+- `lint` — violación de estilo, S608 (SQL crudo fuera del adaptador)
+- `type-check` — error de tipos
+
+Una violación = el build falla = no se mergea.
+
+---
+
+## 6. Convenciones de nombres y ubicación
+
+| Artefacto | Ubicación | Convención |
+|-----------|-----------|------------|
+| Entidad de dominio | `src/domain/<entidad>.py` | `@dataclass class Reserva:` |
+| Value Object | `src/domain/value_objects/<vo>.py` | `@dataclass(frozen=True) class ApartamentoId:` |
+| Puerto (interfaz) | `src/domain/ports.py` | `class ReservaRepository(ABC):` |
+| Caso de uso | `src/application/<caso>_use_case.py` | `class CrearReservaUseCase:` |
+| Repositorio SQLAlchemy | `src/infrastructure/repositories/<repo>.py` | `class SqlReservaRepository(ReservaRepository):` |
+| Modelo ORM | `src/infrastructure/models/<modelo>.py` | `class ReservaORM(Base):` |
+| Adaptador firmado (SQL crudo) | `src/infrastructure/persistence/raw_sql.py` | único archivo con per-file-ignore S608 |
+| Router FastAPI | `src/interface/routers/<resource>.py` | `router = APIRouter(prefix="/reservas")` |
+| Schema Pydantic | `src/interface/schemas/<resource>.py` | `class ReservaCreate(BaseModel):` |
+| Composition root / DI | `src/interface/container.py` o `dependencies.py` | única zona donde interface toca infrastructure |
+| Feature frontend | `src/features/<feature>/` | components, hooks, api.ts, schemas.ts, types.ts |
+| Schema Zod frontend | `src/features/<feature>/schemas.ts` | `export const reservaSchema = z.object({...})` |
+
+---
+
+## 7. Decisiones firmadas relevantes para los arneses 3–6
+
+| Decisión | Valor firmado | Implicación |
+|----------|---------------|-------------|
+| D-G (ORM) | ESTRICTO | Obligatorio el mapper ORM ↔ entidad; no reutilizar ORM como entidad |
+| D-A (auth) | jwt_backend | JWT propio; puerto de identidad en `src/application/`; authz con `Depends()` |
+| D-N (topología) | PLANO | Un único conjunto de 4 capas; sin módulos ni fronteras inter-módulo |
+| D-H (PK) | UUIDv7 | `gen_random_uuid()` de PG18 (UUIDv7); no uses autoincrement |
+| D-I (scoping) | repository | El repositorio filtra por `apartamento_id`/`owner`; sin RLS de Postgres |
+| ESC-1 (RLS) | RECHAZADO | No añadir RLS sin una nueva decisión firmada |
+
+---
+
+*Cualquier desviación de estas reglas requiere una decisión explícita firmada en el gate del arnés
+correspondiente (§8 de CLAUDE.md). No improvises excepciones; el policía las detectará.*

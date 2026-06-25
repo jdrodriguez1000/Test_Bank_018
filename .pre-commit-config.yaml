@@ -1,0 +1,30 @@
+# Pre-commit hooks — gobernanza de seguridad (vector 3 §2.4)
+# Ejecutar: pre-commit install  (una vez, tras clonar el repo)
+# Correr manualmente: pre-commit run --all-files
+#
+# NOTA: requiere pre-commit instalado (pip install pre-commit o uv tool install pre-commit).
+# El job "security" en .github/workflows/ci.yml usa gitleaks-action para el mismo fin en CI.
+
+repos:
+  # Secret scanning — detecta secretos/tokens accidentalmente en el código fuente
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.27.2
+    hooks:
+      - id: gitleaks
+        name: gitleaks secret scan
+        description: Detecta secretos hardcodeados (passwords, tokens, keys)
+
+  # Higiene general de archivos
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+        name: detect private key (complementa gitleaks)
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace

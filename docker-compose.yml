@@ -1,0 +1,34 @@
+# docker-compose.yml — Reservas Sala Comunitaria
+# Stack efectivo firmado: PostgreSQL 18.4 (sin Redis, sin pgvector — E4).
+# Levanta la DB de desarrollo; el backend corre local con `uv run uvicorn`.
+
+services:
+  db:
+    image: postgres:18.4
+    container_name: reservas_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-reservas_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-reservas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-reservas} -d ${POSTGRES_DB:-reservas_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+
+# ---------------------------------------------------------------------------
+# Servicios NO andamiados (dropped[] — E4):
+#   redis      — descartado (stab-03 se resuelve con constraint+transaccion en PG)
+#   pgvector   — descartado (ningun slice usa embeddings)
+#   correo     — diferido a evol-03 (DEC-02)
+#   arq/celery — diferido a evol-03 (DEC-01)
+# ---------------------------------------------------------------------------

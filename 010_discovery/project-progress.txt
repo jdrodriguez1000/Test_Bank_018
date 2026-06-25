@@ -15,3 +15,5 @@ Relato cronológico de la corrida (ritual E10-B). Timestamps reales (UTC, T-019)
 [2026-06-25T12:45:53Z] [C] verdict.json: APPROVED. average=1.0, gate_pass=true, sin vetos (D7=1.0, 3 anclas presentes, D8 N/A en INICIO). A decide Avanzar.
 [2026-06-25T12:48:05Z] [A] approvals[].audit_result=APPROVED. Fase=PHASE_COMPLETE, verdict=APPROVED. Registré 5 decisiones (decisions_library.md) + 1 lección (lessons_learned.md). Procedo a versionado autónomo (T-035).
 [2026-06-25T12:48:05Z] [A] Versionado T-035: commit f18166b (root, 76 archivos) + push OK a origin/main. PHASE_COMPLETE. Handoff al Arnés 2 (Architecture): /caden-architect.
+
+[2026-06-25T17:46:03Z] [A] CONTINUACION (/caden-continue): rehidrato estado. 010_discovery=PHASE_COMPLETE (APPROVED, roadmap v1 firmado). 020_architecture=NOT_STARTED. Puente 010->020 (D-037): handoff a /caden-architect. No reanudo nada en el 010.

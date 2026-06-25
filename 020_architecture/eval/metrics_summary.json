@@ -1,0 +1,60 @@
+{
+  "schema_version": "0.1",
+  "phase": "020_architecture",
+  "type1_operational": {
+    "started_at": "2026-06-25T17:48:16Z",
+    "completed_at": "2026-06-25T19:05:33Z",
+    "wall_clock_ms": 4637000,
+    "human_interaction_ms": 2352000,
+    "per_agent": [
+      {
+        "agent": "architecture-orchestrator",
+        "invocations": 1,
+        "compute_ms": 60000,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      {
+        "agent": "architecture-adapter",
+        "invocations": 1,
+        "compute_ms": 222000,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      {
+        "agent": "scaffold-builder",
+        "invocations": 1,
+        "compute_ms": 603000,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      {
+        "agent": "governance-weaver",
+        "invocations": 1,
+        "compute_ms": 948000,
+        "input_tokens": null,
+        "output_tokens": null
+      }
+    ],
+    "total_tokens": null,
+    "tokens_note": "no instrumentado en esta capa: el consumo por agente no es observable desde el flujo del arnes (diferido a observabilidad externa)"
+  },
+  "type2_quality": {
+    "scaffold_layers_present": true,
+    "business_logic_empty": true,
+    "dropped_count": 9,
+    "policy_contracts": 9,
+    "policy_verified": true,
+    "sqli_blocked_verified": true,
+    "security_vectors_verified": 2,
+    "env_boots": true,
+    "clinerules_present": true,
+    "design_tokens_present": true,
+    "a11y_aa_verified": true,
+    "decisions_closed_count": 7,
+    "open_assumptions": 4,
+    "added_count": 0,
+    "signed": true
+  },
+  "generated_at": "2026-06-25T19:05:33Z"
+}

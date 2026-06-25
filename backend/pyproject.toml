@@ -1,0 +1,164 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reservas-sala-comunitaria"
+version = "0.1.0"
+description = "Backend — Reservas Sala Comunitaria"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    # Web framework + ASGI
+    "fastapi==0.137.1",
+    "uvicorn[standard]==0.49.0",
+    # ORM + migraciones
+    "sqlalchemy==2.0.51",
+    "alembic==1.18.4",
+    # Validacion + settings
+    "pydantic==2.13.4",
+    "pydantic-settings==2.14.2",
+    # Auth JWT
+    "passlib[bcrypt]==1.7.4",
+    "python-jose[cryptography]==3.5.0",
+    # Observabilidad
+    "structlog==26.1.0",
+    # Driver postgres
+    "psycopg2-binary==2.9.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest==9.1.0",
+    "httpx==0.28.1",
+    "pytest-asyncio>=0.23.6",
+    # Lint / format
+    "ruff==0.15.18",
+    # Type-check
+    "mypy==2.1.0",
+    # Gobernanza de arquitectura (policia)
+    "import-linter==2.11",
+    "deptry==0.25.1",
+    # Seguridad (vector 6)
+    "pip-audit>=2.10.1",
+    # E2E (Arnés 060)
+    "playwright==1.60.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# ---------------------------------------------------------------------------
+# Ruff — lint + format
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "T20", "ARG", "PTH"]
+ignore = [
+    "S101",   # assert en tests
+    "S105",   # hardcoded password — los valores reales van en .env
+]
+
+[tool.ruff.lint.per-file-ignores]
+# S608 hardcoded-sql-expression: CONFINADO al adaptador firmado.
+# Unico modulo autorizado para SQL crudo: src/infrastructure/persistence/raw_sql.py
+# Cualquier otro modulo que construya queries por concatenacion/f-string sera bloqueado.
+# (Convención documentada — governance-weaver CP-03; el archivo se crea en Arnés 050.)
+"src/infrastructure/persistence/raw_sql.py" = ["S608"]
+"tests/**/*.py" = ["S101", "S105", "ARG", "T20"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ---------------------------------------------------------------------------
+# mypy — type-check
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/", "tests/"]
+
+[[tool.mypy.overrides]]
+module = ["passlib.*", "jose.*", "psycopg2.*"]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# import-linter — gobernanza de capas (CP-03 governance-weaver)
+# Traduce architecture_style.md §2.2 a contratos ejecutables.
+# Topologia: PLANO (D-N firmado en CP-01g) — un solo conjunto de capas en src/.
+# ---------------------------------------------------------------------------
+[tool.importlinter]
+root_package = "src"
+# Requerido para referencias a paquetes externos (fastapi, sqlalchemy, pydantic)
+# en los contratos forbidden (import-linter §2.11).
+include_external_packages = true
+
+# Contrato 1: Dependencia hacia adentro (interface > infrastructure > application > domain).
+# Una capa superior puede importar las inferiores; nunca al revés.
+[[tool.importlinter.contracts]]
+name = "Clean/Hexagonal layers (dependencia hacia adentro)"
+type = "layers"
+layers = [
+    "src.interface",
+    "src.infrastructure",
+    "src.application",
+    "src.domain",
+]
+
+# Contrato 2: El dominio no conoce frameworks ni capas externas.
+# Dataclasses puras; sin FastAPI, SQLAlchemy ni Pydantic (estilo §1.2 / §5.2 D-F).
+[[tool.importlinter.contracts]]
+name = "domain puro (sin frameworks ni capas externas)"
+type = "forbidden"
+source_modules = ["src.domain"]
+forbidden_modules = [
+    "src.application",
+    "src.infrastructure",
+    "src.interface",
+    "fastapi",
+    "sqlalchemy",
+    "pydantic",
+]
+
+# Contrato 3: La capa de aplicacion orquesta el dominio; no conoce infraestructura,
+# la capa de entrega (interface) ni frameworks de borde.
+[[tool.importlinter.contracts]]
+name = "application sin infraestructura/interface ni frameworks"
+type = "forbidden"
+source_modules = ["src.application"]
+forbidden_modules = [
+    "src.infrastructure",
+    "src.interface",
+    "fastapi",
+    "sqlalchemy",
+]
+
+# Contrato 4: La infraestructura implementa puertos; no depende de la capa de entrega.
+# Excepcion unica: el composition root en src.interface puede importar infrastructure
+# para el wiring de DI — esto ya es legal en el contrato "layers" (interface es la capa
+# mas alta). No se necesita allow extra.
+[[tool.importlinter.contracts]]
+name = "infrastructure no depende de interface"
+type = "forbidden"
+source_modules = ["src.infrastructure"]
+forbidden_modules = ["src.interface"]
+
+# ---------------------------------------------------------------------------
+# deptry — higiene de dependencias declaradas (vector 6 §2.4)
+# ---------------------------------------------------------------------------
+[tool.deptry]
+# DEP002 (dep declarada pero no importada) da falsos positivos en el scaffold vacío.
+# ACTIVAR en Arnés 050 cuando exista código real: eliminar la línea "ignore" abajo.
+ignore = ["DEP002"]
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

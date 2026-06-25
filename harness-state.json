@@ -1,10 +1,10 @@
 {
   "schema_version": "0.1",
   "project": "Reservas Sala Comunitaria",
-  "current_phase": "010_discovery",
+  "current_phase": "020_architecture",
   "phases": {
     "010_discovery":        { "status": "PHASE_COMPLETE", "verdict": "APPROVED", "execution_state_path": "010_discovery/execution-state.json" },
-    "020_architecture":     { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "020_architecture":     { "status": "PHASE_COMPLETE", "verdict": "APPROVED", "execution_state_path": "020_architecture/execution-state.json" },
     "030_contract_mold":    { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
     "040_tactical_planning":{ "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
     "050_execution":        { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
@@ -21,6 +21,17 @@
       "approved_by": "Triple S <110043648+jdrodriguez1000@users.noreply.github.com>",
       "approved_at": "2026-06-25T12:44:15Z",
       "audit_result": "APPROVED"
+    },
+    {
+      "phase": "020_architecture",
+      "command": "/caden-approve",
+      "scope": "architecture-manifest v1",
+      "manifest_version": 1,
+      "manifest_hash": "8cf5df1e5308e94f79823e8f9aa6ad16065b6fb235b08bd677ab815f2a4e7c40",
+      "presented_sha256": "026827ac8ee1d0cb85ce74f4687fdf1f15b27b553ba78aa008af58698f268765",
+      "approved_by": "Triple S <110043648+jdrodriguez1000@users.noreply.github.com>",
+      "approved_at": "2026-06-25T19:04:41Z",
+      "audit_result": "APPROVED"
     }
   ],
   "escalations": [],
@@ -28,5 +39,5 @@
     "decisions_library": "705_knowledge/decisions_library.md",
     "lessons_learned": "705_knowledge/lessons_learned.md"
   },
-  "updated_at": "2026-06-25T12:48:05Z"
+  "updated_at": "2026-06-25T22:03:00Z"
 }

@@ -1,0 +1,217 @@
+# CI — Reservas Sala Comunitaria
+# Dueño: governance-weaver (D-040 / T-049 / CP-03)
+# Los jobs "policy" y "security" ROMPEN el build ante una violación (sin continue-on-error).
+# Los 5 jobs aplican al stack efectivo firmado: Python 3.13 / FastAPI / Next.js 15 / TS 5.9.
+
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: lint
+  # Ruff (incluye Bandit S = vector SQLi/seguridad) + ESLint frontend.
+  # Falla el build ante cualquier violación de estilo o regla de seguridad Ruff.
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Backend ---
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.11.21"
+      - name: Install backend deps
+        run: uv sync --all-extras --python 3.13
+        working-directory: backend
+      - name: Ruff check (backend — incluye Bandit S)
+        run: uv run ruff check .
+        working-directory: backend
+
+      # --- Frontend ---
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend deps
+        run: npm ci --legacy-peer-deps
+        working-directory: frontend
+      - name: ESLint (frontend)
+        run: npx eslint . --max-warnings 0
+        working-directory: frontend
+
+  # ---------------------------------------------------------------------------
+  # Job 2: type-check
+  # mypy (backend estricto) + tsc --noEmit (frontend strict).
+  # ---------------------------------------------------------------------------
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Backend ---
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.11.21"
+      - name: Install backend deps
+        run: uv sync --all-extras --python 3.13
+        working-directory: backend
+      - name: mypy (backend)
+        run: uv run mypy src
+        working-directory: backend
+
+      # --- Frontend ---
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend deps
+        run: npm ci --legacy-peer-deps
+        working-directory: frontend
+      - name: tsc --noEmit (frontend)
+        run: npx tsc --noEmit
+        working-directory: frontend
+
+  # ---------------------------------------------------------------------------
+  # Job 3: policy  — ROMPE EL BUILD (sin continue-on-error)
+  # import-linter: hace cumplir las 4 capas backend (§2.2).
+  # dependency-cruiser: no-cross-feature, ui-no-features, no-circular (§3).
+  # Cierra T-049.
+  # ---------------------------------------------------------------------------
+  policy:
+    name: Policy (capas backend + frontend)
+    runs-on: ubuntu-latest
+    # SIN continue-on-error — una violación de capa rompe el build
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Backend (import-linter) ---
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.11.21"
+      - name: Install backend deps
+        run: uv sync --all-extras --python 3.13
+        working-directory: backend
+      - name: lint-imports (contratos de capas backend)
+        run: uv run lint-imports
+        working-directory: backend
+
+      # --- Frontend (dependency-cruiser) ---
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend deps
+        run: npm ci --legacy-peer-deps
+        working-directory: frontend
+      - name: depcruise (no-cross-feature, ui-no-features, no-circular)
+        # --fail-on: error bloquea el build; warn solo advierte
+        run: npx depcruise src app --config .dependency-cruiser.cjs --output-type err
+        working-directory: frontend
+
+  # ---------------------------------------------------------------------------
+  # Job 4: security  — ROMPE EL BUILD (sin continue-on-error)
+  # pip-audit + deptry (backend) + npm audit (frontend) + gitleaks secret-scan.
+  # Vectores §2.4: 3 (secretos), 6 (higiene deps).
+  # ---------------------------------------------------------------------------
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    # SIN continue-on-error — CVE conocida o secreto detectado rompe el build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks-action necesita el historial completo
+          fetch-depth: 0
+
+      # --- Backend ---
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.11.21"
+      - name: Install backend deps
+        run: uv sync --all-extras --python 3.13
+        working-directory: backend
+      - name: pip-audit (sin CVE conocidas en deps)
+        run: uv run pip-audit
+        working-directory: backend
+      - name: deptry (higiene de deps declaradas/usadas)
+        # DEP002 suprimido en scaffold; activar en Arnés 050 (ver pyproject.toml [tool.deptry])
+        run: uv run deptry src
+        working-directory: backend
+
+      # --- Frontend ---
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend deps
+        run: npm ci --legacy-peer-deps
+        working-directory: frontend
+      - name: npm audit (sin CVE >= high en deps)
+        run: npm audit --audit-level=high
+        working-directory: frontend
+
+      # --- Secret scan (vector 3 §2.4) ---
+      - name: gitleaks secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # Job 5: test
+  # pytest backend (unidad + integración). E2E Playwright se añade en Arnés 060.
+  # Requiere Postgres para tests de integración.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_USER: reservas
+          POSTGRES_PASSWORD: reservas_test
+          POSTGRES_DB: reservas_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.11.21"
+      - name: Install backend deps
+        run: uv sync --all-extras --python 3.13
+        working-directory: backend
+      - name: pytest (backend)
+        run: uv run pytest
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://reservas:reservas_test@localhost:5432/reservas_test
+          # Secreto de test — NO usar en producción
+          JWT_SECRET_KEY: ci-test-secret-not-for-production
+          JWT_ALGORITHM: HS256

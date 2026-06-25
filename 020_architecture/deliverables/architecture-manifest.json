@@ -1,0 +1,106 @@
+{
+  "schema_version": "0.1",
+  "project": "Reservas Sala Comunitaria",
+  "phase": "020_architecture",
+  "version": 1,
+  "mode": "INICIO",
+  "based_on_roadmap": {
+    "version": 1,
+    "sha256": "d232d5b3eb7e6faa0633eb9d3e7b69a01f80e5be61fc38bf4d8a0bba1c601d03"
+  },
+  "effective_stack": {
+    "backend": { "language": "python", "version": "3.13", "framework": "fastapi", "extra": { "framework_version": "0.137.1", "asgi": "uvicorn 0.49.0", "orm": "sqlalchemy 2.0.51", "migrations": "alembic 1.18.4", "validation": "pydantic 2.13.4 / pydantic-settings 2.14.2", "env_manager": "uv 0.11.21", "auth": "jwt propio (passlib/bcrypt)", "logging": "structlog 26.1.0", "testing": "pytest 9.1.0 / httpx 0.28.1", "lint": "ruff 0.15.18", "type_check": "mypy 2.1.0", "policy": "import-linter 2.11 / deptry 0.25.1" } },
+    "frontend": { "framework": "next", "version": "15.5.19", "lang": "typescript", "extra": { "ts_version": "5.9.3", "styles": "tailwind 4.x", "ui": "shadcn 4.11.0 / lucide-react 1.21.0", "data": "tanstack-query 5.101.0", "forms": "react-hook-form 7.80.0 / zod 4.4.3", "lint": "eslint 10.5.0 / prettier 3.8.4", "policy": "dependency-cruiser 17.4.3", "e2e": "@playwright/test 1.61.0" } },
+    "db": { "engine": "postgres", "version": "18.4", "extensions": [] },
+    "added": [],
+    "dropped": ["pgvector", "full_text_search", "pagos (stripe/wompi/mercadopago + webhook)", "correo_transaccional (condicional evol-03)", "redis", "arq/celery (condicional evol-03/DEC-01)", "pyright", "biome", "sentry"]
+  },
+  "effective_style": {
+    "layers": "clean_hexagonal_4",
+    "orm_mapping": "strict",
+    "topology": "plano",
+    "domain_repr": "dataclasses",
+    "pk": "uuidv7",
+    "row_scope": "repository"
+  },
+  "decisions_closed": {
+    "auth": "jwt_backend",
+    "orm_mode": "estricto",
+    "topology": "plano",
+    "stack_edge_optin": [],
+    "escapes": []
+  },
+  "design_system": {
+    "source": "default",
+    "a11y": "WCAG_AA",
+    "modes": ["light", "dark"],
+    "level": "L0"
+  },
+  "policy": {
+    "import_linter_contracts": [
+      "Clean/Hexagonal layers (dependencia hacia adentro)",
+      "domain puro (sin frameworks ni capas externas)",
+      "application sin infraestructura/interface ni frameworks",
+      "infrastructure no depende de interface"
+    ],
+    "dependency_cruiser_rules": [
+      "no-cross-feature",
+      "ui-no-features",
+      "lib-no-features",
+      "no-circular",
+      "no-orphans"
+    ],
+    "ci_workflow": ".github/workflows/ci.yml",
+    "ci_enforcing_jobs": ["policy", "security"]
+  },
+  "security_baseline": {
+    "sqli": { "rule": "orm/parametrized; raw sql confined to signed adapter (ruff S608 per-file-ignore en src/infrastructure/persistence/raw_sql.py)", "verified": true },
+    "input_validation": { "rule": "pydantic (backend) + zod (frontend) at boundary", "verified": false },
+    "secrets": { "rule": "pydantic-settings; .env gitignored; secret-scan (gitleaks) en pre-commit/CI", "verified": false },
+    "authz": { "rule": "jwt + role/scope at application layer (Depends)", "verified": false },
+    "xss_headers_cors": { "rule": "react/no-danger (eslint, demostrado); restrictive CORS + security headers (FastAPI)", "verified": false },
+    "dep_hygiene": { "rule": "pip-audit / npm-audit + deptry en CI; lockfiles uv.lock + package-lock.json", "verified": true }
+  },
+  "verification": {
+    "policy_blocks": true,
+    "sqli_blocked": true,
+    "env_boots": true
+  },
+  "scaffold_inventory": [
+    "backend/.python-version",
+    "backend/alembic.ini",
+    "backend/alembic/env.py",
+    "backend/alembic/versions/.gitkeep",
+    "backend/pyproject.toml",
+    "backend/src/__init__.py",
+    "backend/src/application/__init__.py",
+    "backend/src/domain/__init__.py",
+    "backend/src/infrastructure/__init__.py",
+    "backend/src/interface/__init__.py",
+    "backend/tests/__init__.py",
+    "backend/uv.lock",
+    "frontend/.dependency-cruiser.cjs",
+    "frontend/app/.gitkeep",
+    "frontend/app/layout.tsx",
+    "frontend/app/page.tsx",
+    "frontend/eslint.config.mjs",
+    "frontend/next.config.ts",
+    "frontend/package-lock.json",
+    "frontend/package.json",
+    "frontend/src/components/ui/.gitkeep",
+    "frontend/src/features/.gitkeep",
+    "frontend/src/lib/.gitkeep",
+    "frontend/src/styles/globals.css",
+    "frontend/tsconfig.json",
+    "docker-compose.yml",
+    ".env.example",
+    ".gitignore",
+    ".github/workflows/ci.yml",
+    ".clinerules",
+    ".pre-commit-config.yaml"
+  ],
+  "change_log": [],
+  "signature_ref": "harness-state.json -> approvals[] (comando /caden-approve)",
+  "approved": true,
+  "signed_at": "2026-06-25T19:04:41Z"
+}
