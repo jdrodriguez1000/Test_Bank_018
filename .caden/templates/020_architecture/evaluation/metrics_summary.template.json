@@ -1,0 +1,52 @@
+{
+  "_comment": "PLANTILLA (C-9, plano de construccion, L-001). Salida de C junto con verdict.json. Metricas Tipo 1 (operativas por agente) y Tipo 2 (calidad del resultado). La instancia se escribe en runtime en /020_architecture/eval/metrics_summary.json. Los <...> son marcadores.",
+  "schema_version": "0.1",
+  "phase": "020_architecture",
+  "type1_operational": {
+    "_comment": "Operativas (T-019/T-022). FUENTE: el registro 'timing' de execution-state.json (marcas REALES de A). compute_ms por agente = SUMA de (ended_at-started_at) de sus entradas en timing.per_worker[] (solo computo, excluye espera humana). human_interaction_ms = SUMA de (ended_at-started_at) de timing.human_interactions[] (espera del humano: gate de decision + gate de firma); NO se atribuye a ningun agente. wall_clock_ms = completed_at-started_at (lo abarca todo). Los TOKENS no son observables desde dentro del arnes: quedan null con razon en tokens_note. NUNCA fabricar marcas ni tokens.",
+    "started_at": null,
+    "completed_at": null,
+    "wall_clock_ms": null,
+    "human_interaction_ms": null,
+    "_human_interaction_ms_comment": "espera humana total (gate de decision CP-01g + gate de firma CP-04), separada del computo para no inflar la latencia de los agentes (T-022). FUENTE: timing.human_interactions[].",
+    "per_agent": [],
+    "_per_agent_item_shape": {
+      "agent": "<architecture-orchestrator | architecture-adapter | scaffold-builder | governance-weaver | architecture-evaluator>",
+      "invocations": null,
+      "compute_ms": null,
+      "_compute_ms_comment": "SOLO computo: suma de las entradas per_worker[] de este agente. Excluye la espera humana (T-022).",
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    "total_tokens": null,
+    "tokens_note": "no instrumentado en esta capa: el consumo por agente no es observable desde el flujo del arnes (diferido a observabilidad externa)"
+  },
+  "type2_quality": {
+    "_comment": "Calidad del resultado de la fase 020 (alineada con la rubrica D1-D8). Derivable de los entregables (architecture-manifest.json, scaffold_report.md, policy_verification.md) + execution-state.",
+    "scaffold_layers_present": null,
+    "_scaffold_layers_present_comment": "true si las 4 capas backend (domain/application/infrastructure/interface) estan + frontend por features (invariante D1).",
+    "business_logic_empty": null,
+    "_business_logic_empty_comment": "true si el scaffold esta vacio de logica de negocio (invariante D1).",
+    "dropped_count": null,
+    "_dropped_count_comment": "nº de piezas de la base NO andamiadas por no aplicar (E4); evidencia de que no se andamio de mas.",
+    "policy_contracts": null,
+    "policy_verified": null,
+    "_policy_verified_comment": "true si la violacion de capa (domain→infrastructure) fue demostrablemente BLOQUEADA y C lo reprodujo (ancla D2).",
+    "sqli_blocked_verified": null,
+    "_sqli_blocked_verified_comment": "true si el anti-SQLi fue demostrado y C lo reprodujo (ancla D4).",
+    "security_vectors_verified": null,
+    "_security_vectors_verified_comment": "nº de los 6 vectores (brief §8) con verified=true en security_baseline.",
+    "env_boots": null,
+    "clinerules_present": null,
+    "design_tokens_present": null,
+    "a11y_aa_verified": null,
+    "decisions_closed_count": null,
+    "_decisions_closed_comment": "nº de decisiones abiertas (D-A + escapes) cerradas en el gate de decision CP-01g.",
+    "open_assumptions": null,
+    "_open_assumptions_comment": "nº de supuestos abiertos que C cito en verdict.reasons[] y que toparon dimensiones (lista autoritativa; verificacion solo configurada sin captura, version sin verificar, etc.).",
+    "added_count": null,
+    "_added_count_comment": "(Modo Ajuste) nº de piezas nuevas provisionadas (change_request.added).",
+    "signed": null
+  },
+  "generated_at": null
+}

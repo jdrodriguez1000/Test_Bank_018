@@ -1,0 +1,116 @@
+{
+  "_comment": "PLANTILLA (C-6, plano de construccion, L-001). Estado TACTICO de EJECUCION del arnes 020 — POR HARNESS (modelo mixto): uno por arnes, vive en la carpeta de su fase. En el modelo plano, A (sesion principal) persiste los checkpoints; B (architecture-orchestrator) aporta el orchestration_plan inicial. La instancia se crea en runtime quitando .template; los <...> son marcadores. DOBLE GATE (DA-4): gate de decision en lenguaje natural (CP-01g) ANTES de andamiar + gate de firma (/caden-approve) en CP-04.",
+  "schema_version": "0.1",
+  "phase": "020_architecture",
+  "mode": "INICIO",
+  "_mode_enum": ["INICIO", "AJUSTE", "CONTINUACION"],
+  "execution_status": "NOT_STARTED",
+  "_execution_status_enum": ["NOT_STARTED", "PLANNING", "EXECUTING", "EXECUTION_COMPLETE"],
+  "based_on_roadmap": {
+    "_comment": "El INSUMO del 020: el roadmap-manifest.json FIRMADO por el 010 (seam 010→020). A lo lee en CP-00. version/sha256 atan la arquitectura al roadmap; en Modo Ajuste (DA-6) A reabre el 020 si roadmap.version > este.",
+    "version": null,
+    "sha256": null
+  },
+  "orchestration_plan": {
+    "_comment": "Devuelto por B (architecture-orchestrator). Lista ordenada de workers a invocar — secuencial, no paralela (diseño §1-§2). Los workers del 020 EJECUTAN (D-031): instalan deps, corren el policia.",
+    "workers": [],
+    "_workers_item_shape": {
+      "worker": "architecture-adapter | scaffold-builder | governance-weaver",
+      "order": 0,
+      "inputs": ["<path o id de input>"],
+      "expected_output": "<path del artefacto>"
+    }
+  },
+  "checkpoints": {
+    "CP-00": { "reached": false, "roadmap_sha256": null, "roadmap_version": null, "mode": null },
+    "CP-01": { "reached": false, "effective_config_path": null, "open_decisions": [] },
+    "_CP-01_comment": "architecture-adapter -> effective_config.md: configuracion efectiva propuesta + decisiones abiertas enumeradas (auth D-A, escapes D-G/D-I, adiciones).",
+    "CP-01g": { "reached": false, "decisions_closed": null, "approved_in_nl_at": null },
+    "_CP-01g_comment": "GATE DE DECISION (humano, lenguaje natural, DA-4): cierra D-A (auth) + escapes del estilo + adiciones/relajaciones. Sin esto NO se andamia (P5). Esto NO usa /caden-approve (ese es solo la firma del manifest en CP-04).",
+    "CP-02": { "reached": false, "scaffold_report_path": null, "scaffold_inventory": [], "env_boots": false },
+    "_CP-02_comment": "scaffold-builder -> scaffold + manifiestos + deps instaladas + tokens aplicados; entorno arranca/compila limpio.",
+    "CP-03": { "reached": false, "manifest_path": null, "policy_verification_path": null, "manifest_sha256": null },
+    "_CP-03_manifest_sha256_comment": "Snapshot SHA256 del architecture-manifest.json TAL COMO SE PRESENTA al humano (draft, approved=false), tomado por A al abrir el gate de firma (D-024/R2). Es la procedencia de la firma: /caden-approve compara el hash en disco (antes de consolidar) contra este snapshot; si difieren, el draft fue alterado fuera de banda -> A NO firma, re-presenta y refresca este snapshot. Se refresca tambien tras /caden-review y tras reabrir el draft en un rework (paso de rechazo).",
+    "CP-03r": { "reached": false, "requested_adjustments": [], "reworked_workers": [] },
+    "CP-04": { "reached": false, "approved_at": null }
+  },
+  "decisions_closed": {
+    "_comment": "Lo cerrado en el gate de decision CP-01g. Inerte (null) hasta que el humano lo cierre. A lo consolida en el architecture-manifest.decisions_closed.",
+    "auth": null,
+    "_auth_enum": ["jwt_backend", "authjs", "managed:<provider>"],
+    "orm_mode": null,
+    "_orm_mode_enum": ["estricto", "orm_relaxed"],
+    "_orm_mode_comment": "D-G. Default estricto; orm_relaxed solo si la checklist §5.1 (6 casillas) se cumple TODA. El scaffold-builder lo lee de aqui.",
+    "topology": null,
+    "_topology_enum": ["plano", "modular"],
+    "_topology_comment": "D-N. Default plano; modular solo con señales fuertes multi-dominio (§2.5). Modular cambia el arbol (src/modules/<dom>/...) y exige contratos inter-modulo del governance-weaver. Microservicios NO es opcion.",
+    "stack_edge_optin": [],
+    "_stack_edge_optin_item_shape": { "piece": "<lib>", "edge_version": "<version al filo>", "justification": "<por que el proyecto sube del piso estable>" },
+    "_stack_edge_optin_comment": "D-C. Vacio = piso estable (default §0.1). Cada entrada = una pieza que el proyecto firma subir al filo por encima del piso.",
+    "escapes": [],
+    "_escapes_item_shape": { "escape": "rls | <otro>", "justification": "<por que>" }
+  },
+  "rework_loop": {
+    "_comment": "Protocolo de rechazo (reusa D-021/INC-3 del 010). Si C emite REJECTED tecnico, A pone la fase IN_REWORK, anula la firma obsoleta (approvals[].audit_result=REJECTED), re-invoca SOLO los failed_workers[] del veredicto (D2/D4->governance-weaver; D1/D3/D6->scaffold-builder; config/decisiones->architecture-adapter), reabre el draft (CP-04.reached=false, vuelve a EXECUTION_COMPLETE) y re-presenta el gate. Al agotar max_iterations (o rechazo estrategico/no atribuible a un worker, o rework demostrablemente futil -procedencia D-024/R2 vuelve a disparar-): HOLD + escalations[] + escala al humano. La re-firma tras rework mantiene version=v1 (la firma previa quedo REJECTED y no cuenta; D-021).",
+    "iterations": 0,
+    "max_iterations": 2,
+    "history": [],
+    "_history_item_shape": {
+      "iteration": 0,
+      "verdict_ref": "020_architecture/eval/verdict.json",
+      "failed_workers": ["<copia VERBATIM de verdict.json.failed_workers; fuente unica = C, no re-deducir (T-032)>"],
+      "reworked_workers": ["<worker re-invocado>"],
+      "requested_at": "<iso8601 real>"
+    }
+  },
+  "change_request": {
+    "_comment": "Modo Ajuste = Validacion de Impacto Arquitectonica (DA-6, D-035, diseño §11). NO lo dispara /caden-change directo (ese actua sobre el 010): A lo abre cuando detecta roadmap.version > architecture-manifest.based_on_roadmap.version y reabre el 020 via /caden-architect. En Modo Inicio queda inerte (active=false). El architecture-adapter (modo impacto) produce el dictamen; dos salidas: luz verde sin re-andamiar / molde base nuevo provisionado sin reconstruir. La re-firma sube version a vN+1.",
+    "active": false,
+    "trigger_roadmap_version": null,
+    "strategy": null,
+    "_strategy_enum": ["green_light", "new_mold"],
+    "impact_report_path": null,
+    "added": [],
+    "unchanged": [],
+    "requested_at": null
+  },
+  "timing": {
+    "_comment": "Registro de tiempos REALES (T-019/T-022). A toma cada marca con la orden permitida (Get-Date UTC); NUNCA las fabrica. Fuente de wall_clock_ms y del computo/espera por agente en metrics_summary.json. per_worker: una entrada por INVOCACION de subagente; su [started_at, ended_at] mide SOLO computo. La espera HUMANA (gate de decision, gate de firma) NO va en per_worker: se registra aparte en human_interactions[] (T-022).",
+    "started_at": null,
+    "completed_at": null,
+    "per_worker": [],
+    "_per_worker_item_shape": {
+      "agent": "<architecture-orchestrator | architecture-adapter | scaffold-builder | governance-weaver | architecture-evaluator>",
+      "started_at": "<iso8601 real>",
+      "ended_at": "<iso8601 real>"
+    },
+    "human_interactions": [],
+    "_human_interactions_item_shape": {
+      "context": "<decision_gate | sign_gate>",
+      "started_at": "<iso8601 real — A presenta al humano y empieza a esperar>",
+      "ended_at": "<iso8601 real — el humano decide/firma>"
+    }
+  },
+  "durability": {
+    "_comment": "Durabilidad y reanudacion (reusa INC-4 del 010: E2/E5/E10-B). last_checkpoint es el punto seguro desde el que /caden-continue reanuda SIN reiniciar. Puente (D-037): si el 010 esta PHASE_COMPLETE y el 020 NOT_STARTED, /caden-continue REDIRIGE a /caden-architect (no reanuda). resumptions[]: una entrada por reanudacion (E10-B) o context reset (E2). suspensions[]: una por pausa (/caden-suspend). restarts: nº de reinicios (/caden-restart).",
+    "resumptions": [],
+    "_resumptions_item_shape": {
+      "resumed_at": "<iso8601 real>",
+      "from_checkpoint": "<CP-00 | CP-01 | CP-01g | CP-02 | CP-03 | CP-04>",
+      "trigger": "context_reset | interrupcion | reentrada",
+      "note": "<que se reanudo y por que>"
+    },
+    "context_resets": 0,
+    "suspensions": [],
+    "_suspensions_item_shape": {
+      "suspended_at": "<iso8601 real>",
+      "at_checkpoint": "<last_checkpoint al pausar>",
+      "reason": "<motivo; 'suspensión manual' si no se dio>"
+    },
+    "restarts": 0
+  },
+  "last_checkpoint": null,
+  "sprint_contract_path": "020_architecture/contract/sprint_contract.md",
+  "project_progress_path": "020_architecture/project-progress.txt",
+  "updated_at": null
+}

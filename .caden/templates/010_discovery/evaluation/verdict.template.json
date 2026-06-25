@@ -1,0 +1,31 @@
+{
+  "_comment": "PLANTILLA (C-10, plano de construccion, L-001). Salida de C (discovery-evaluator). Rubrica del diseño §10 (D1-D8). La instancia se escribe en runtime en /010_discovery/eval/verdict.json. Los <...> son marcadores.",
+  "_gate": "Promedio >= 0.75 Y ninguna dimension < 0.5.",
+  "_veto": "D7 == 0.0 -> REJECTED (sin firma /caden-approve no hay fase). En Modo Ajuste, D8 == 0.0 -> REJECTED. Falta de cualquier ancla obligatoria (tracer_bullet/mvp/final) en D2 -> REJECTED.",
+  "schema_version": "0.1",
+  "phase": "010_discovery",
+  "mode": "INICIO",
+  "_mode_enum": ["INICIO", "AJUSTE", "CONTINUACION"],
+  "verdict": "PENDING",
+  "_verdict_enum": ["APPROVED", "REJECTED", "PENDING"],
+  "scores": {
+    "D1_mece_slices": null,
+    "D2_clasificacion_bandas": null,
+    "D3_trituracion_epicas": null,
+    "D4_cobertura_bdd": null,
+    "D5_no_funcionales": null,
+    "D6_dependencias_orden": null,
+    "D7_firma_humana": null,
+    "D8_integridad_cambio": null
+  },
+  "_D8_comment": "Solo aplica en Modo Ajuste (/caden-change). En Modo Inicio queda null (N/A).",
+  "average": null,
+  "gate_pass": null,
+  "veto_triggered": false,
+  "veto_reason": null,
+  "reasons": [],
+  "recommendations": [],
+  "failed_workers": [],
+  "_failed_workers_comment": "Dirige el protocolo de rechazo de A (diseño §13.4, D-021). REJECTED tecnico: workers a re-invocar (D4/D5->bdd-synthesizer; D1/D2/D3/D6->epic-slicer, incl. veto de ancla; ambiguedad->behavior-questioner). VACIO [] = rechazo no atribuible a un worker (scope/contrato, veto D7) -> A escala a HOLD, no hace rework.",
+  "evaluated_at": null
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.1",
+  "phase": "010_discovery",
+  "type1_operational": {
+    "started_at": "2026-06-25T12:19:11Z",
+    "completed_at": "2026-06-25T12:45:53Z",
+    "wall_clock_ms": 1602000,
+    "human_interaction_ms": 672000,
+    "per_agent": [
+      {
+        "agent": "discovery-orchestrator",
+        "invocations": 1,
+        "compute_ms": 32000,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      {
+        "agent": "behavior-questioner",
+        "invocations": 3,
+        "compute_ms": 198000,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      {
+        "agent": "epic-slicer",
+        "invocations": 1,
+        "compute_ms": 91000,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      {
+        "agent": "bdd-synthesizer",
+        "invocations": 2,
+        "compute_ms": 326000,
+        "input_tokens": null,
+        "output_tokens": null
+      }
+    ],
+    "total_tokens": null,
+    "tokens_note": "no instrumentado en esta capa: el consumo por agente no es observable desde el flujo del arnes (diferido a observabilidad externa, INC-6)"
+  },
+  "type2_quality": {
+    "slices_total": 11,
+    "anchors_present": true,
+    "bands_valid": true,
+    "mece_ok": true,
+    "epics_detected": 1,
+    "epics_split": 1,
+    "slices_with_bdd": 11,
+    "slices_with_nonfunctional": 11,
+    "open_assumptions": 0,
+    "contradictions_resolved": 0,
+    "clarification_iterations": 0,
+    "signed": true
+  },
+  "generated_at": "2026-06-25T12:45:53Z"
+}

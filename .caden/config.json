@@ -1,0 +1,9 @@
+{
+  "_comment": "Configuracion de OPERACION del motor CADEN para este proyecto-cliente (plano de operacion, L-001). La escribe caden-setup (terminal); la leen /caden-init y los playbooks para el versionado git autonomo (T-035). NO es estado de runtime (eso es harness-state.json) NI insumo de producto (eso es scope.md). Sin secretos: el push usa el credential helper AMBIENTAL (gh / Git Credential Manager / SSH) configurado una vez en esta maquina. Disparadores de commit/push: PHASE_COMPLETE (firma APPROVED) y re-firma del Modo Ajuste (vN+1); nunca en draft/rechazado. Rama: main.",
+  "git": {
+    "local_versioning": true,
+    "branch": "main",
+    "remote": "https://github.com/jdrodriguez1000/Test_Bank_018.git",
+    "push": true
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "_comment": "PLANTILLA (C-9, plano de construccion, L-001). Salida de C (architecture-evaluator). Rubrica del diseño §10 (D1-D8, D-036). C RE-VERIFICA con cerebro fresco (D-032): re-corre el policia (D2) y el anti-SQLi (D4), no se fia del reporte del worker. La instancia se escribe en runtime en /020_architecture/eval/verdict.json. Los <...> son marcadores.",
+  "_gate": "Promedio >= 0.75 Y ninguna dimension < 0.5.",
+  "_veto": "D7 == 0.0 -> REJECTED (sin cierre de decisiones / sin firma no hay fase). D2 == 0.0 -> REJECTED (policia inerte: el corazon del arnes). D4 anti-SQLi no demostrado -> REJECTED (vector ancla). En Modo Ajuste, D8 == 0.0 -> REJECTED.",
+  "_tope": "Verificacion solo configurada sin captura real -> topa D2/D4 <= 0.8 (tope por verificacion pendiente, paralelo a T-016). No es veto si las anclas (violacion de capa + anti-SQLi) si se demostraron.",
+  "schema_version": "0.1",
+  "phase": "020_architecture",
+  "mode": "INICIO",
+  "_mode_enum": ["INICIO", "AJUSTE", "CONTINUACION"],
+  "verdict": "PENDING",
+  "_verdict_enum": ["APPROVED", "REJECTED", "PENDING"],
+  "scores": {
+    "D1_fidelidad_scaffold": null,
+    "D2_policia_verificado": null,
+    "D3_entorno_sano": null,
+    "D4_linea_base_seguridad": null,
+    "D5_manual_agente": null,
+    "D6_design_system": null,
+    "D7_firma_humana": null,
+    "D8_integridad_cambio": null
+  },
+  "_D8_comment": "Solo aplica en Modo Ajuste (DA-6, validacion de impacto). En Modo Inicio queda null (N/A).",
+  "average": null,
+  "gate_pass": null,
+  "veto_triggered": false,
+  "veto_reason": null,
+  "verification_reproduced": {
+    "_comment": "Resultado de la RE-VERIFICACION independiente de C (D-032). Si C no reproduce el bloqueo que el worker reporto, el policia/anti-SQLi es inerte -> veto, aunque policy_verification.md dijera OK.",
+    "policy_blocks": null,
+    "sqli_blocked": null,
+    "env_boots": null
+  },
+  "reasons": [],
+  "recommendations": [],
+  "failed_workers": [],
+  "_failed_workers_comment": "Dirige el protocolo de rechazo de A (reusa D-021, diseño §13/§11). REJECTED tecnico: workers a re-invocar (D2/D4 policia/seguridad -> governance-weaver; D1/D3/D6 scaffold/entorno/tokens -> scaffold-builder; D-A/config/decisiones -> architecture-adapter). VACIO [] = rechazo no atribuible a un worker (scope/decisiones, veto D7) -> A escala a HOLD, no hace rework.",
+  "evaluated_at": null
+}

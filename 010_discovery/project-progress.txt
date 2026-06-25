@@ -1,0 +1,17 @@
+project-progress.txt — Bitácora del arnés 010 (Discovery) · Proyecto: Reservas Sala Comunitaria
+================================================================================================
+Relato cronológico de la corrida (ritual E10-B). Timestamps reales (UTC, T-019).
+
+---
+[2026-06-25T12:19:11Z] [A] INICIO — Modo: INICIO. scope.md leído (CP-00, scope_hash=049e11a4…c990). Estado de runtime inicializado (harness-state.json=INIT, execution-state.json creado). Sprint Contract presentado al humano.
+[2026-06-25T12:20:50Z] [A] Gate P5: contrato APROBADO (humano "sí"). harness-state.json=CONTRACT_APPROVED. Invoco a B (discovery-orchestrator) para planificar.
+[2026-06-25T12:22:13Z] [B] orchestration_plan devuelto: behavior-questioner -> epic-slicer -> bdd-synthesizer. Persistido en execution-state.json (execution_status=EXECUTING). Invoco a behavior-questioner (modo PREGUNTAR).
+[2026-06-25T12:23:31Z] [behavior-questioner] Cuestionario (7 preguntas) generado. Relayado al humano.
+[2026-06-25T12:28:07Z] [behavior-questioner] Transcript: /010_discovery/deliverables/behavior_transcript.md. CP-01. 3 huecos UNRESOLVED registrados (ventana a futuro, definición de 'el mes', alta/baja de vecinos). Invoco a epic-slicer.
+[2026-06-25T12:30:25Z] [epic-slicer] slicing_report.md. Estado: RESUELTO. n_stab=4 n_evol=4 (11 slices, 3 anclas: tracer-01/mvp-01/final-01). UNRESOLVED no bloquean (pasan como supuestos al synthesizer). CP-02. Invoco a bdd-synthesizer.
+[2026-06-25T12:33:57Z] [bdd-synthesizer] roadmap-manifest.json (draft, v1, 11 slices) + slices/*.md (11). CP-03 (manifest_sha256=f116cb1e…601a). execution_status=EXECUTION_COMPLETE. Presento draft al humano (gate).
+[2026-06-25T12:42:29Z] [A] /caden-review: humano resolvió los 3 UNRESOLVED (ventana 30d, mes calendario por fecha del bloque, bajas/mudanzas/altas). CP-03r. Re-invoqué behavior-questioner (transcript: huecos→RESUELTO) y bdd-synthesizer (stab-01/stab-02/final-01 + tracer-01; manifest descriptions). 0 UNRESOLVED. CP-03.manifest_sha256 refrescado=0a8350bc…1e8d. Re-presento draft (gate sigue abierto, EXECUTION_COMPLETE).
+[2026-06-25T12:44:15Z] [A] /caden-approve: procedencia OK (disco==snapshot). Manifest consolidado (approved=true, 11 slices status=approved, version=1, hash de récord=d232d5b3…1d03). Firma registrada en harness-state.json->approvals[] (audit_result=PENDING). CP-04. Fase=IN_AUDIT. Invoco a C (discovery-evaluator).
+[2026-06-25T12:45:53Z] [C] verdict.json: APPROVED. average=1.0, gate_pass=true, sin vetos (D7=1.0, 3 anclas presentes, D8 N/A en INICIO). A decide Avanzar.
+[2026-06-25T12:48:05Z] [A] approvals[].audit_result=APPROVED. Fase=PHASE_COMPLETE, verdict=APPROVED. Registré 5 decisiones (decisions_library.md) + 1 lección (lessons_learned.md). Procedo a versionado autónomo (T-035).
+[2026-06-25T12:48:05Z] [A] Versionado T-035: commit f18166b (root, 76 archivos) + push OK a origin/main. PHASE_COMPLETE. Handoff al Arnés 2 (Architecture): /caden-architect.

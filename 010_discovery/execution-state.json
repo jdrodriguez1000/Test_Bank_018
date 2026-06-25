@@ -1,0 +1,74 @@
+{
+  "schema_version": "0.1",
+  "phase": "010_discovery",
+  "mode": "INICIO",
+  "execution_status": "EXECUTION_COMPLETE",
+  "scope_hash": "049e11a4a861b1409b0bb92fc85d57948a9260523b6dd09d3f8544c3c976c990",
+  "orchestration_plan": {
+    "workers": [
+      { "worker": "behavior-questioner", "order": 1, "inputs": ["900_documents/scope.md", "respuestas del cliente al cuestionario"], "expected_output": "010_discovery/deliverables/behavior_transcript.md" },
+      { "worker": "epic-slicer", "order": 2, "inputs": ["010_discovery/deliverables/behavior_transcript.md"], "expected_output": "010_discovery/deliverables/slicing_report.md" },
+      { "worker": "bdd-synthesizer", "order": 3, "inputs": ["010_discovery/deliverables/slicing_report.md"], "expected_output": "010_discovery/deliverables/roadmap-manifest.json + 010_discovery/deliverables/slices/<slice-id>.md" }
+    ]
+  },
+  "checkpoints": {
+    "CP-00": { "reached": true, "scope_hash": "049e11a4a861b1409b0bb92fc85d57948a9260523b6dd09d3f8544c3c976c990", "mode": "INICIO" },
+    "CP-01": { "reached": true, "behavior_transcript_path": "010_discovery/deliverables/behavior_transcript.md" },
+    "CP-02": { "reached": true, "slicing_report_path": "010_discovery/deliverables/slicing_report.md", "clarification_iterations": 0 },
+    "CP-03": { "reached": true, "manifest_path": "010_discovery/deliverables/roadmap-manifest.json", "slice_md_paths": ["010_discovery/deliverables/slices/tracer-01.md", "010_discovery/deliverables/slices/stab-01.md", "010_discovery/deliverables/slices/stab-02.md", "010_discovery/deliverables/slices/stab-03.md", "010_discovery/deliverables/slices/stab-04.md", "010_discovery/deliverables/slices/mvp-01.md", "010_discovery/deliverables/slices/evol-01.md", "010_discovery/deliverables/slices/evol-02.md", "010_discovery/deliverables/slices/evol-03.md", "010_discovery/deliverables/slices/evol-04.md", "010_discovery/deliverables/slices/final-01.md"], "manifest_sha256": "0a8350bc56677e677757af82a9affe5fb9c170a7a8f73f2eac73c193ef081e8d" },
+    "CP-03r": { "reached": true, "requested_adjustments": [
+      "tracer-01/stab-01 — Ventana de reserva a futuro: máximo 30 días de anticipación (desde hoy hasta +30 días); mínimo el mismo día mientras el bloque no haya empezado.",
+      "stab-02 — 'El mes' del tope de 4 = mes calendario (día 1 al último del mes); el tope se cuenta por la fecha del bloque reservado, no por la fecha en que se hizo clic.",
+      "final-01 — Baja/mudanza: al dar de baja persona o apartamento, sus reservas activas a futuro se cancelan y las franjas vuelven a libres de inmediato; las completadas se conservan en historial. Cambio de apartamento: las reservas a futuro quedan atadas al apto anterior y se cancelan/liberan (no se arrastran entre aptos por el conteo de topes); el vecino puede re-reservar desde el nuevo. Alta nueva: entra con topes en cero para el mes en curso."
+    ], "reworked_workers": ["behavior-questioner", "bdd-synthesizer"] },
+    "CP-04": { "reached": true, "approved_at": "2026-06-25T12:44:15Z" }
+  },
+  "clarification_loop": {
+    "iterations": 0,
+    "max_iterations": 3,
+    "pending_questions": [],
+    "unresolved": []
+  },
+  "rework_loop": {
+    "iterations": 0,
+    "max_iterations": 2,
+    "history": []
+  },
+  "timing": {
+    "started_at": "2026-06-25T12:19:11Z",
+    "completed_at": "2026-06-25T12:45:53Z",
+    "per_worker": [
+      { "agent": "discovery-orchestrator", "started_at": "2026-06-25T12:21:41Z", "ended_at": "2026-06-25T12:22:13Z" },
+      { "agent": "behavior-questioner", "started_at": "2026-06-25T12:22:47Z", "ended_at": "2026-06-25T12:23:31Z" },
+      { "agent": "behavior-questioner", "started_at": "2026-06-25T12:26:37Z", "ended_at": "2026-06-25T12:28:07Z" },
+      { "agent": "epic-slicer", "started_at": "2026-06-25T12:28:54Z", "ended_at": "2026-06-25T12:30:25Z" },
+      { "agent": "bdd-synthesizer", "started_at": "2026-06-25T12:30:57Z", "ended_at": "2026-06-25T12:33:57Z" },
+      { "agent": "behavior-questioner", "started_at": "2026-06-25T12:38:59Z", "ended_at": "2026-06-25T12:40:03Z" },
+      { "agent": "bdd-synthesizer", "started_at": "2026-06-25T12:40:03Z", "ended_at": "2026-06-25T12:42:29Z" }
+    ],
+    "human_interactions": [
+      { "context": "gate", "started_at": "2026-06-25T12:19:11Z", "ended_at": "2026-06-25T12:20:50Z" },
+      { "context": "questionnaire", "started_at": "2026-06-25T12:23:31Z", "ended_at": "2026-06-25T12:26:37Z" },
+      { "context": "gate", "started_at": "2026-06-25T12:33:57Z", "ended_at": "2026-06-25T12:38:38Z" },
+      { "context": "gate", "started_at": "2026-06-25T12:42:29Z", "ended_at": "2026-06-25T12:44:15Z" }
+    ]
+  },
+  "change_request": {
+    "active": false,
+    "description": null,
+    "strategy": null,
+    "impacted_slices": [],
+    "added_slices": [],
+    "requested_at": null
+  },
+  "durability": {
+    "resumptions": [],
+    "context_resets": 0,
+    "suspensions": [],
+    "restarts": 0
+  },
+  "last_checkpoint": "CP-04",
+  "sprint_contract_path": "010_discovery/contract/sprint_contract.md",
+  "project_progress_path": "010_discovery/project-progress.txt",
+  "updated_at": "2026-06-25T12:48:05Z"
+}

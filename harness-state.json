@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1",
+  "project": "Reservas Sala Comunitaria",
+  "current_phase": "010_discovery",
+  "phases": {
+    "010_discovery":        { "status": "PHASE_COMPLETE", "verdict": "APPROVED", "execution_state_path": "010_discovery/execution-state.json" },
+    "020_architecture":     { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "030_contract_mold":    { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "040_tactical_planning":{ "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "050_execution":        { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "060_validation":       { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null }
+  },
+  "approvals": [
+    {
+      "phase": "010_discovery",
+      "command": "/caden-approve",
+      "scope": "roadmap-manifest v1",
+      "manifest_version": 1,
+      "manifest_hash": "d232d5b3eb7e6faa0633eb9d3e7b69a01f80e5be61fc38bf4d8a0bba1c601d03",
+      "presented_sha256": "0a8350bc56677e677757af82a9affe5fb9c170a7a8f73f2eac73c193ef081e8d",
+      "approved_by": "Triple S <110043648+jdrodriguez1000@users.noreply.github.com>",
+      "approved_at": "2026-06-25T12:44:15Z",
+      "audit_result": "APPROVED"
+    }
+  ],
+  "escalations": [],
+  "knowledge": {
+    "decisions_library": "705_knowledge/decisions_library.md",
+    "lessons_learned": "705_knowledge/lessons_learned.md"
+  },
+  "updated_at": "2026-06-25T12:48:05Z"
+}

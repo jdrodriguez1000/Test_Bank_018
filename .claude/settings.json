@@ -1,0 +1,16 @@
+{
+  "_comment": "Settings de PROYECTO instalado por caden-setup en .claude/settings.json del cliente (plano de operacion, L-001). 'defaultMode': 'bypassPermissions' (T-015, decision explicita del usuario) hace que el motor opere sin pedir confirmacion en ninguna herramienta, para correr sin friccion. EXCEPCION CONSCIENTE a L-007 (postura amplia): por eso la lista 'allow' se mantiene CURADA y minima como defensa en profundidad (relevante si algun dia se baja el defaultMode); NO se copio la lista amplia/riesgosa de la referencia (sin --dangerously-skip-permissions, sin Remove-Item *, sin powershell.exe *). Amplia 'allow' solo si necesitas mas y revisa antes.",
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Bash(git *)",
+      "Bash(mkdir *)",
+      "PowerShell((Get-Date).ToUniversalTime().ToString(\"yyyy-MM-ddTHH:mm:ssZ\"))",
+      "PowerShell(git config user.name)",
+      "PowerShell(git config user.email)"
+    ]
+  }
+}

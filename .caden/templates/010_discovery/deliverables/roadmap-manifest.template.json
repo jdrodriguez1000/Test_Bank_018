@@ -1,0 +1,67 @@
+{
+  "_comment": "PLANTILLA (plano de construccion, L-001). SALIDA CENTRAL del Arnes 010: Vertical Slices MECE clasificadas en bandas (D-010). Instancia VIVA en runtime (el Modo Ajuste la muta). 'version' = numero de aprobacion de la fase (D-020/T-018): la 1a firma deja v1; cada re-firma del Modo Ajuste sube a v2, v3... /caden-approve lo fija como (aprobaciones previas en approvals[]) + 1. El 'version:1' del draft es solo marcador de borrador. La instancia se crea quitando .template; los <...> son marcadores. Las 3 slices de abajo son EJEMPLO ilustrativo del minimo obligatorio (las 3 anclas).",
+  "schema_version": "0.1",
+  "project": "<nombre del proyecto cliente>",
+  "version": 1,
+  "_band_invariant": "Orden: tracer_bullet -> [stabilization 1..n] -> mvp -> [evolution 1..n] -> final. Anclas OBLIGATORIAS (exactamente 1 de cada): tracer_bullet, mvp, final. Minimo 3 slices. stabilization solo entre tracer y mvp; evolution solo entre mvp y final.",
+  "_type_enum": ["tracer_bullet", "stabilization", "mvp", "evolution", "final"],
+  "slices": [
+    {
+      "id": "tracer-01",
+      "name": "<nombre de la slice ancla Tracer Bullet>",
+      "type": "tracer_bullet",
+      "band_index": null,
+      "order": 1,
+      "description": "<que comportamiento end-to-end minimo entrega>",
+      "depends_on": [],
+      "bdd_path": "010_discovery/deliverables/slices/tracer-01.md",
+      "nonfunctional_ref": "<ancla a la seccion no funcional del .md de la slice>",
+      "status": "draft",
+      "_status_enum": ["draft", "approved"]
+    },
+    {
+      "id": "mvp-01",
+      "name": "<nombre de la slice ancla MVP>",
+      "type": "mvp",
+      "band_index": null,
+      "order": 2,
+      "description": "<conjunto minimo de valor utilizable>",
+      "depends_on": ["tracer-01"],
+      "bdd_path": "010_discovery/deliverables/slices/mvp-01.md",
+      "nonfunctional_ref": "<...>",
+      "status": "draft"
+    },
+    {
+      "id": "final-01",
+      "name": "<nombre de la slice ancla Final>",
+      "type": "final",
+      "band_index": null,
+      "order": 3,
+      "description": "<cierre/consolidacion del alcance>",
+      "depends_on": ["mvp-01"],
+      "bdd_path": "010_discovery/deliverables/slices/final-01.md",
+      "nonfunctional_ref": "<...>",
+      "status": "draft"
+    }
+  ],
+  "_optional_band_example": {
+    "_comment": "Ejemplo de slice de banda (NO ancla): stabilization/evolution usan band_index 1,2,3... y van SOLO en su tramo.",
+    "id": "stab-01",
+    "type": "stabilization",
+    "band_index": 1,
+    "depends_on": ["tracer-01"]
+  },
+  "approved": false,
+  "signed_at": null,
+  "signature_ref": "harness-state.json -> approvals[] (comando /caden-approve)",
+  "_change_log_comment": "Bitacora de mutaciones del Modo Ajuste (/caden-change, INC-5, diseño §11). En Modo Inicio queda []. Cada entrada documenta una inyeccion de feature: la estrategia (Expansion = dentro de una slice existente; Nueva Rebanada = slice intermedia + recalculo de calendario), que slices se tocaron/anadieron y cuando. El bdd-synthesizer (modo mutacion) la rellena; 'version' la fija /caden-approve en la re-firma (vN+1).",
+  "change_log": [],
+  "_change_log_item_shape": {
+    "version": 0,
+    "change_description": "<feature inyectada, del /caden-change>",
+    "strategy": "expansion | nueva_rebanada",
+    "affected_slices": ["<id de slice modificada>"],
+    "added_slices": ["<id de slice nueva, si Opcion B>"],
+    "changed_at": "<iso8601 real>"
+  }
+}

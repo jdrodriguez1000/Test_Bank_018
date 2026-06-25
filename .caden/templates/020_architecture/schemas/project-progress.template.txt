@@ -1,0 +1,46 @@
+PLANTILLA — project-progress.txt (plano de operacion, L-001)
+===========================================================
+Bitacora NARRATIVA de la ejecucion del arnes 020 (Architecture). La escribe la INSTANCIA ACTIVA en
+cada momento (A, B, Worker o C). No es persistencia estructurada (eso son los .json); es el relato
+cronologico para reanudar con contexto (ritual E10-B).
+
+POR HARNESS (modelo mixto): una bitacora por arnes. Esta es una PLANTILLA: se copia a la terminal de
+operacion quitando .template y alli se llena en runtime. Las lineas <...> son marcadores.
+
+TIMESTAMPS REALES (T-019): cada [<iso8601>] es una marca de tiempo REAL tomada con la orden permitida
+(Get-Date UTC), NO un valor inventado ni una secuencia redonda. Si no puedes tomar la hora real, pide
+la hora al humano; nunca la fabriques.
+
+DOBLE GATE (DA-4): el 020 tiene DOS gates humanos — (1) gate de DECISION en lenguaje natural (CP-01g:
+cierra D-A/auth y los escapes del estilo ANTES de andamiar) y (2) gate de FIRMA (/caden-approve en
+CP-04, sobre el laboratorio ya construido). No confundirlos.
+
+REANUDACION (E10-B, INC-4 reusado): si la corrida se interrumpe, NO se reinicia. /caden-continue lee
+este relato + execution-state.json (last_checkpoint) y retoma desde el ultimo checkpoint alcanzado.
+PUENTE (D-037): si el 010 esta PHASE_COMPLETE y el 020 sin empezar, /caden-continue REDIRIGE a
+/caden-architect (no reanuda). Cada reanudacion (o context reset E2) deja su propia linea [A] CONTINUACION.
+
+---
+[<iso8601>] [A] INICIO — Modo: <INICIO|AJUSTE|CONTINUACION>. roadmap-manifest.json (010) + 3 bloques leidos (CP-00). Sprint Contract presentado al humano.
+[<iso8601>] [A] Gate P5: contrato APROBADO (lenguaje natural). Invoco a B (planificar).
+[<iso8601>] [B] orchestration_plan devuelto: architecture-adapter -> scaffold-builder -> governance-weaver.
+[<iso8601>] [A] Plan persistido en execution-state.json. Invoco a architecture-adapter.
+[<iso8601>] [architecture-adapter] effective_config.md: configuracion efectiva + decisiones abiertas (auth D-A, orm_mode D-G checklist, topology D-N, escapes). CP-01.
+[<iso8601>] [A] GATE DE DECISION (lenguaje natural): humano cierra D-A=<...>, orm_mode=<estricto|orm_relaxed>, topology=<plano|modular>, stack_edge_optin=<...> y escapes=<...>. decisions_closed persistido. CP-01g.
+[<iso8601>] [A] Invoco a scaffold-builder.
+[<iso8601>] [scaffold-builder] scaffold + manifiestos + deps instaladas + tokens aplicados; entorno arranca/compila: <OK|FALLO>. scaffold_report.md. CP-02.
+[<iso8601>] [A] Invoco a governance-weaver.
+[<iso8601>] [governance-weaver] policia + seguridad + .clinerules + verificacion demostrada (violacion de capa BLOQUEADA; anti-SQLi BLOQUEADO). policy_verification.md. CP-03.
+[<iso8601>] [A] Consolido architecture-manifest.json (draft) y registro su sha256. Presento el laboratorio al humano (gate de firma). <APPROVE | REVIEW "<ajustes>" (CP-03r) | reescritura NL>.
+[<iso8601>] [A] /caden-approve: comparo sha256 disco vs CP-03 (D-024/R2). Firmado. CP-04. Registro firma en harness-state.json -> approvals[]. Commit base. Invoco a C.
+[<iso8601>] [C] verdict.json: <APPROVED|REJECTED>. (C RE-VERIFICA policia + anti-SQLi con cerebro fresco, D-032). A decide <Avanzar|Repetir>.
+[<iso8601>] [A] Registro decisiones/lecciones en 705_knowledge/ (si las hubo).
+[<iso8601>] [A] PHASE_COMPLETE. Handoff al Arnes 3 (Contract & Mold).
+
+--- ejemplo de reanudacion (E10-B) — solo si hubo interrupcion o context reset ---
+[<iso8601>] [A] CONTINUACION (/caden-continue): rehidrato estado. last_checkpoint=<CP-0x>. Reanudo en el paso <n> SIN reiniciar.
+
+--- ejemplo de Modo Ajuste (DA-6) — solo si el roadmap del 010 muto y re-firmo ---
+[<iso8601>] [A] AJUSTE (Validacion de Impacto): roadmap.version=<N> > based_on_roadmap.version=<N-1>. Reabro el 020 via /caden-architect.
+[<iso8601>] [architecture-adapter] (modo impacto) impact_report.md. Dictamen: <luz verde | molde base nuevo>.
+[<iso8601>] [A] Diff + re-firma /caden-approve -> vN+1 (change_log[]). C audita con D8 activa.

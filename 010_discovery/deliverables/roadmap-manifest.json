@@ -1,0 +1,143 @@
+{
+  "schema_version": "0.1",
+  "project": "Reservas Sala Comunitaria",
+  "version": 1,
+  "slices": [
+    {
+      "id": "tracer-01",
+      "name": "Reservar un bloque libre (cableado punta a punta)",
+      "type": "tracer_bullet",
+      "band_index": null,
+      "order": 1,
+      "description": "Un vecino dado de alta entra con su correo, ve el calendario de un día con los 3 bloques fijos, elige uno libre y la franja queda ocupada y persiste. Sin validaciones, topes, concurrencia, normas ni cancelación: solo prueba identidad → disponibilidad → reserva → persistencia de punta a punta.",
+      "depends_on": [],
+      "bdd_path": "010_discovery/deliverables/slices/tracer-01.md",
+      "nonfunctional_ref": "tracer-01.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "stab-01",
+      "name": "Validar bloque y día permitidos",
+      "type": "stabilization",
+      "band_index": 1,
+      "order": 2,
+      "description": "El sistema solo acepta los 3 bloques predefinidos (bloque entero) en días permitidos; bloquea o no ofrece bloques inexistentes y días fuera de lo permitido, incluida la ventana de reserva a futuro (máximo 30 días de anticipación, mínimo el mismo día mientras el bloque no haya empezado), sin ajustar por su cuenta.",
+      "depends_on": ["tracer-01"],
+      "bdd_path": "010_discovery/deliverables/slices/stab-01.md",
+      "nonfunctional_ref": "stab-01.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "stab-02",
+      "name": "Topes por apartamento",
+      "type": "stabilization",
+      "band_index": 2,
+      "order": 3,
+      "description": "El sistema hace cumplir los topes por apartamento: máximo 2 reservas activas a futuro y no más de 4 reservas por mes calendario, contadas por la fecha del bloque reservado (no por la fecha del clic); rechaza con aviso al superar el tope, sin prioridades ni puntajes.",
+      "depends_on": ["tracer-01", "stab-01"],
+      "bdd_path": "010_discovery/deliverables/slices/stab-02.md",
+      "nonfunctional_ref": "stab-02.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "stab-03",
+      "name": "Sin doble reserva (concurrencia)",
+      "type": "stabilization",
+      "band_index": 3,
+      "order": 4,
+      "description": "Ante dos confirmaciones concurrentes sobre el mismo bloque/día, gana el primero que confirma; el perdedor recibe un aviso claro y el calendario actualizado. Nunca dos reservas pisadas (integridad/atomicidad).",
+      "depends_on": ["tracer-01", "stab-01"],
+      "bdd_path": "010_discovery/deliverables/slices/stab-03.md",
+      "nonfunctional_ref": "stab-03.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "stab-04",
+      "name": "Cancelación y ciclo de vida de la reserva",
+      "type": "stabilization",
+      "band_index": 4,
+      "order": 5,
+      "description": "El dueño puede cancelar su reserva solo hasta el día anterior (mismo día no); al cancelar a tiempo la franja vuelve a libre de inmediato. Al pasar el bloque, la reserva transiciona a COMPLETADA y persiste.",
+      "depends_on": ["tracer-01", "stab-02"],
+      "bdd_path": "010_discovery/deliverables/slices/stab-04.md",
+      "nonfunctional_ref": "stab-04.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "mvp-01",
+      "name": "Reserva utilizable: normas + mis reservas",
+      "type": "mvp",
+      "band_index": null,
+      "order": 6,
+      "description": "La columna endurecida lo mínimo para usarse de verdad: reservar aceptando las normas obligatoriamente (\"acepto las normas\") y poder ver las reservas propias, sobre el núcleo ya estabilizado. Conjunto mínimo desplegable y útil para el vecino.",
+      "depends_on": ["tracer-01", "stab-01", "stab-02", "stab-03", "stab-04"],
+      "bdd_path": "010_discovery/deliverables/slices/mvp-01.md",
+      "nonfunctional_ref": "mvp-01.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "evol-01",
+      "name": "Reservar recursos extra con la sala",
+      "type": "evolution",
+      "band_index": 1,
+      "order": 7,
+      "description": "Diferido declarado: permitir reservar recursos extra junto con la sala (proyector, sillas plegables, equipo de sonido) como parte de la reserva.",
+      "depends_on": ["mvp-01"],
+      "bdd_path": "010_discovery/deliverables/slices/evol-01.md",
+      "nonfunctional_ref": "evol-01.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "evol-02",
+      "name": "Visto bueno del administrador",
+      "type": "evolution",
+      "band_index": 2,
+      "order": 8,
+      "description": "Diferido declarado: aprobación del administrador para reservas de fechas señaladas, introduciendo un estado pendiente-de-aprobación que el admin aprueba o rechaza.",
+      "depends_on": ["mvp-01"],
+      "bdd_path": "010_discovery/deliverables/slices/evol-02.md",
+      "nonfunctional_ref": "evol-02.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "evol-03",
+      "name": "Recordatorio previo a la reserva",
+      "type": "evolution",
+      "band_index": 3,
+      "order": 9,
+      "description": "Diferido declarado: enviar al vecino un recordatorio un par de días antes de su reserva próxima.",
+      "depends_on": ["mvp-01"],
+      "bdd_path": "010_discovery/deliverables/slices/evol-03.md",
+      "nonfunctional_ref": "evol-03.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "evol-04",
+      "name": "Vista dedicada de historial de uso",
+      "type": "evolution",
+      "band_index": 4,
+      "order": 10,
+      "description": "Diferido declarado: vista dedicada de historial de uso de la sala (quién la usó) construida sobre las reservas COMPLETADAS persistidas en stab-04.",
+      "depends_on": ["mvp-01", "stab-04"],
+      "bdd_path": "010_discovery/deliverables/slices/evol-04.md",
+      "nonfunctional_ref": "evol-04.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    },
+    {
+      "id": "final-01",
+      "name": "Gestión administrativa de altas y cierre de alcance",
+      "type": "final",
+      "band_index": null,
+      "order": 11,
+      "description": "La administración da de alta a los vecinos sobre el padrón fijo de 48 apartamentos (torres A/B, 101–802) por correo + apartamento, donde varias personas cuentan como el mismo apartamento y no hay auto-registro; gestiona bajas/mudanzas (cancelan las reservas a futuro y liberan franjas, conservando las COMPLETADAS) y cambios de apartamento (las reservas a futuro no se arrastran), y el alta nueva entra con topes en cero. Cierra el alcance del scope.",
+      "depends_on": ["mvp-01"],
+      "bdd_path": "010_discovery/deliverables/slices/final-01.md",
+      "nonfunctional_ref": "final-01.md#restricciones-no-funcionales-ligadas-a-este-comportamiento",
+      "status": "approved"
+    }
+  ],
+  "approved": true,
+  "signed_at": "2026-06-25T12:44:15Z",
+  "signature_ref": "harness-state.json -> approvals[] (comando /caden-approve)",
+  "change_log": []
+}

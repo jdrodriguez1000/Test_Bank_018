@@ -1,0 +1,97 @@
+{
+  "_comment": "PLANTILLA (plano de construccion, L-001). Estado TACTICO de EJECUCION del arnes 010 — POR HARNESS (modelo mixto): uno por arnes, vive en la carpeta de su fase. En el modelo plano, A (sesion principal) persiste los checkpoints; B (discovery-orchestrator) aporta el orchestration_plan inicial. La instancia se crea en runtime quitando .template; los <...> son marcadores.",
+  "schema_version": "0.1",
+  "phase": "010_discovery",
+  "mode": "INICIO",
+  "_mode_enum": ["INICIO", "AJUSTE", "CONTINUACION"],
+  "execution_status": "NOT_STARTED",
+  "_execution_status_enum": ["NOT_STARTED", "PLANNING", "EXECUTING", "EXECUTION_COMPLETE"],
+  "scope_hash": null,
+  "orchestration_plan": {
+    "_comment": "Devuelto por B (discovery-orchestrator). Lista ordenada de workers a invocar — secuencial, no paralela (diseño §2).",
+    "workers": [],
+    "_workers_item_shape": {
+      "worker": "behavior-questioner | epic-slicer | bdd-synthesizer",
+      "order": 0,
+      "inputs": ["<path o id de input>"],
+      "expected_output": "<path del artefacto>"
+    }
+  },
+  "checkpoints": {
+    "CP-00": { "reached": false, "scope_hash": null, "mode": null },
+    "CP-01": { "reached": false, "behavior_transcript_path": null },
+    "CP-02": { "reached": false, "slicing_report_path": null, "clarification_iterations": 0 },
+    "CP-03": { "reached": false, "manifest_path": null, "slice_md_paths": [], "manifest_sha256": null, "_manifest_sha256_comment": "Snapshot SHA256 del manifest TAL COMO SE PRESENTA al humano (estado draft, approved=false), tomado por A al presentar/re-presentar el gate (D-024/R2). Es la procedencia de la firma: /caden-approve compara el hash en disco (antes de consolidar) contra este snapshot; si difieren, el draft fue alterado fuera de banda -> A NO firma, re-presenta y refresca este snapshot. Se refresca tambien tras /caden-review y tras reabrir el draft en un rework (paso 6 B1)." },
+    "CP-03r": { "reached": false, "requested_adjustments": [], "reworked_workers": [] },
+    "CP-04": { "reached": false, "approved_at": null }
+  },
+  "clarification_loop": {
+    "_comment": "epic-slicer reporta PENDIENTE DE ACLARACION -> A re-invoca behavior-questioner acotado -> epic-slicer. A las >=3 iteraciones sin resolver: ALERTA y escalamiento a A (diseño §2, §6).",
+    "iterations": 0,
+    "max_iterations": 3,
+    "pending_questions": [],
+    "unresolved": []
+  },
+  "rework_loop": {
+    "_comment": "Protocolo de rechazo (INC-3, diseño §13.4). Si C emite REJECTED tecnico, A pone la fase IN_REWORK, anula la firma obsoleta (approvals[].audit_result=REJECTED), re-invoca SOLO los failed_workers[] del veredicto, reabre el draft (CP-04.reached=false, vuelve a EXECUTION_COMPLETE) y re-presenta el gate. Al agotar max_iterations (o si el rechazo es estrategico/no atribuible a un worker, o si el rework es demostrablemente futil: el worker ya corrigio pero el mismo defecto reaparece por alteracion fuera de banda -procedencia D-024/R2 vuelve a disparar-, T-032/S-028): HOLD + escalations[] + escala al humano. La re-firma tras rework mantiene version=v1 (la firma previa quedo REJECTED y no cuenta; D-021).",
+    "iterations": 0,
+    "max_iterations": 2,
+    "history": [],
+    "_history_item_shape": {
+      "iteration": 0,
+      "verdict_ref": "010_discovery/eval/verdict.json",
+      "failed_workers": ["<copia VERBATIM de verdict.json.failed_workers; fuente unica = C, no re-deducir (T-032)>"],
+      "reworked_workers": ["<worker re-invocado>"],
+      "requested_at": "<iso8601 real>"
+    }
+  },
+  "timing": {
+    "_comment": "Registro de tiempos REALES (T-019/T-022). A toma cada marca con la orden permitida (Get-Date UTC); NUNCA las fabrica. Fuente de wall_clock_ms y del computo/espera por agente en metrics_summary.json. per_worker: una entrada por INVOCACION de subagente; su [started_at, ended_at] mide SOLO computo (entre que A llama y el agente responde). La espera HUMANA (responder el cuestionario, una aclaracion, decidir el gate) NO va en per_worker: se registra aparte en human_interactions[] para no contaminar la latencia de computo del agente (T-022). Un behavior-questioner con PREGUNTAR + TRANSCRIBIR (+ aclaraciones) produce VARIAS entradas per_worker, una por invocacion.",
+    "started_at": null,
+    "completed_at": null,
+    "per_worker": [],
+    "_per_worker_item_shape": {
+      "agent": "<discovery-orchestrator | behavior-questioner | epic-slicer | bdd-synthesizer | discovery-evaluator>",
+      "started_at": "<iso8601 real>",
+      "ended_at": "<iso8601 real>"
+    },
+    "human_interactions": [],
+    "_human_interactions_item_shape": {
+      "context": "<questionnaire | clarification | gate>",
+      "started_at": "<iso8601 real — A presenta al humano y empieza a esperar>",
+      "ended_at": "<iso8601 real — el humano responde/decide>"
+    }
+  },
+  "change_request": {
+    "_comment": "Modo Ajuste (/caden-change, INC-5, diseño §11). En Modo Inicio queda inerte (active=false). A lo inicializa en CP-00 del ajuste con la descripcion del cambio; el epic-slicer (modo impacto) fija strategy/impacted/added; el bdd-synthesizer (modo mutacion) muta el manifest y anota change_log[]. La re-firma sube version a vN+1.",
+    "active": false,
+    "description": null,
+    "strategy": null,
+    "_strategy_enum": ["expansion", "nueva_rebanada"],
+    "impacted_slices": [],
+    "added_slices": [],
+    "requested_at": null
+  },
+  "durability": {
+    "_comment": "Durabilidad y reanudacion (INC-4, diseño §7/§8 + E2/E5/E10-B) + ciclo de vida (T-011). last_checkpoint es el punto seguro desde el que /caden-continue reanuda SIN reiniciar (ritual E10-B). resumptions[]: una entrada por cada reanudacion (E10-B) o context reset (E2). suspensions[]: una entrada por cada pausa deliberada (/caden-suspend); NO cambia el status de la fase, solo deja traza (la fase se retoma con /caden-continue). restarts: nº de reinicios desde cero de esta fase (/caden-restart); cada reinicio archiva lo anterior en _archive/<sello>/ y resetea el estado.",
+    "resumptions": [],
+    "_resumptions_item_shape": {
+      "resumed_at": "<iso8601 real>",
+      "from_checkpoint": "<CP-00 | CP-01 | CP-02 | CP-03 | CP-04>",
+      "trigger": "context_reset | interrupcion | reentrada",
+      "note": "<que se reanudo y por que>"
+    },
+    "context_resets": 0,
+    "suspensions": [],
+    "_suspensions_item_shape": {
+      "suspended_at": "<iso8601 real>",
+      "at_checkpoint": "<last_checkpoint al pausar, p.ej. CP-02>",
+      "reason": "<motivo de la pausa; 'suspensión manual' si no se dio>"
+    },
+    "restarts": 0
+  },
+  "last_checkpoint": null,
+  "sprint_contract_path": "010_discovery/contract/sprint_contract.md",
+  "project_progress_path": "010_discovery/project-progress.txt",
+  "updated_at": null
+}

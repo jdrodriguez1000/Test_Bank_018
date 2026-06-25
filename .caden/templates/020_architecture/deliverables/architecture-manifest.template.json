@@ -1,0 +1,111 @@
+{
+  "_comment": "PLANTILLA (C-6, plano de construccion, L-001). SALIDA CENTRAL del arnes 020 (DA-5, D-034). Analogo al roadmap-manifest.json del 010: captura la configuracion EFECTIVA del laboratorio + las decisiones cerradas en el gate de decision + el inventario del scaffold + las reglas del policia + el resultado de verificacion + la linea base de seguridad. Es el artefacto que /caden-approve FIRMA con snapshot sha256 (D-024/R2) y versiona (D-020). La instancia se escribe en runtime en 020_architecture/deliverables/architecture-manifest.json (quitando .template); los <...> son marcadores. Esquema = plan 020 §7.",
+  "schema_version": "0.1",
+  "project": "<nombre>",
+  "_project_comment": "fuente unica = harness-state.project (T-020); A lo copia, no lo reinventa.",
+  "phase": "020_architecture",
+  "version": 1,
+  "_version_comment": "= nº de aprobacion de la fase (D-020). 1ª firma deja v1; version++ SOLO en Modo Ajuste (DA-6). /caden-approve lo deriva de approvals[] (cuenta solo las APPROVED; una firma REJECTED no cuenta, D-021).",
+  "mode": "INICIO",
+  "_mode_enum": ["INICIO", "AJUSTE", "CONTINUACION"],
+  "based_on_roadmap": {
+    "_comment": "Ata esta arquitectura al roadmap-manifest.json FIRMADO por el 010 que la origino. En Modo Ajuste (DA-6, D-035), A reabre el 020 cuando roadmap.version > based_on_roadmap.version.",
+    "version": 1,
+    "sha256": null
+  },
+  "effective_stack": {
+    "_comment": "Stack EFECTIVO = base aplicable (stack_tec.md) + adiciones aprobadas en el gate de decision - piezas no aplicables (E4, D-027). El architecture-adapter lo propone; el humano lo cierra en CP-01g.",
+    "backend": { "language": "python", "version": "<x.y>", "framework": "fastapi", "extra": {} },
+    "frontend": { "framework": "next", "version": "<x.y.z>", "lang": "typescript", "extra": {} },
+    "db": { "engine": "postgres", "version": "<x.y>", "extensions": [] },
+    "added": [],
+    "_added_comment": "adiciones aprobadas en el gate de decision (CP-01g) sobre la base.",
+    "dropped": [],
+    "_dropped_comment": "piezas de la base que NO aplican a este proyecto y NO se andamian (E4)."
+  },
+  "effective_style": {
+    "layers": "clean_hexagonal_4",
+    "orm_mapping": "strict",
+    "_orm_mapping_enum": ["strict", "relaxed"],
+    "_orm_mapping_comment": "D-G: relaxed = decidido por checklist §5.1 (decisions_closed.orm_mode); refleja esa decision.",
+    "topology": "plano",
+    "_topology_enum": ["plano", "modular"],
+    "_topology_comment": "D-N: plano = src/{capas}; modular = src/modules/<dom>/{capas} + contratos inter-modulo. Refleja decisions_closed.topology.",
+    "domain_repr": "dataclasses",
+    "pk": "uuidv7",
+    "_pk_enum": ["uuidv7", "bigint_identity"],
+    "row_scope": "repository",
+    "_row_scope_enum": ["repository", "rls"],
+    "_row_scope_comment": "D-I: rls = escape firmado (debe ir en decisions_closed.escapes con justificacion)."
+  },
+  "decisions_closed": {
+    "_comment": "Decisiones abiertas cerradas por el humano en el GATE DE DECISION (CP-01g) ANTES de andamiar. Sin esto no se construye (P5). Espeja execution-state.decisions_closed.",
+    "auth": null,
+    "_auth_enum": ["jwt_backend", "authjs", "managed:<provider>"],
+    "_auth_comment": "D-A. Default adaptable = jwt_backend (brief §2, stack §5).",
+    "orm_mode": null,
+    "_orm_mode_enum": ["estricto", "orm_relaxed"],
+    "_orm_mode_comment": "D-G. Default estricto; orm_relaxed solo si la checklist §5.1 se cumple toda.",
+    "topology": null,
+    "_topology_enum": ["plano", "modular"],
+    "_topology_comment": "D-N. Default plano; modular solo con señales fuertes multi-dominio (§2.5).",
+    "stack_edge_optin": [],
+    "_stack_edge_optin_item_shape": { "piece": "<lib>", "edge_version": "<version al filo>", "justification": "<por que sube del piso estable D-C>" },
+    "escapes": [],
+    "_escapes_item_shape": { "escape": "rls | <otro>", "justification": "<por que se aprueba la relajacion>" }
+  },
+  "design_system": {
+    "source": "default",
+    "_source_enum": ["brand", "default"],
+    "_source_comment": "brand si 900_documents/brand.md esta lleno; default (sobrio) si no.",
+    "a11y": "WCAG_AA",
+    "modes": ["light", "dark"]
+  },
+  "policy": {
+    "_comment": "Reglas del policia que el scaffold deja CONFIGURADAS (plan §8.1). C verifica que BLOQUEAN (D2), no solo que existan.",
+    "import_linter_contracts": [],
+    "_import_linter_contracts_comment": "p.ej. ['domain≠application', 'domain≠infrastructure', 'application≠infrastructure', 'composition_root_allow'] (plan §8.1).",
+    "dependency_cruiser_rules": [],
+    "_dependency_cruiser_rules_comment": "p.ej. ['no-cross-feature', 'ui-no-features', 'no-orphans', 'no-circular'] (plan §8.1).",
+    "ci_workflow": null,
+    "_ci_workflow_comment": "Path del workflow de CI que hace cumplir el policia/seguridad en pipeline (plan §8.3). Dueño = governance-weaver (D-040, T-049). p.ej. '.github/workflows/ci.yml'. null si el stack efectivo no lo aplica (E4).",
+    "ci_enforcing_jobs": [],
+    "_ci_enforcing_jobs_comment": "Jobs que ROMPEN el build (sin continue-on-error), no advierten. p.ej. ['policy', 'security'] (import-linter+depcruise / pip-audit+npm-audit+secret-scan). C verifica que existen y no llevan continue-on-error."
+  },
+  "security_baseline": {
+    "_comment": "6 vectores del brief §8 (plan §8.2) como reglas VERIFICABLES. 'verified' = se demostro con corrida real (captura en policy_verification.md, L-009). Anti-SQLi y la violacion de capa se demuestran SIEMPRE (anclas). El resto: configurado-y-verificado o topa D2/D4 ≤ 0.8 si solo configurado.",
+    "sqli": { "rule": "orm/parametrized; raw sql confined to signed adapter", "verified": false },
+    "input_validation": { "rule": "pydantic (backend) + zod (frontend) at boundary", "verified": false },
+    "secrets": { "rule": "pydantic-settings; secret-scan in pre-commit/CI", "verified": false },
+    "authz": { "rule": "jwt + role/scope at application layer", "verified": false },
+    "xss_headers_cors": { "rule": "react auto-escape; restrictive CORS + security headers", "verified": false },
+    "dep_hygiene": { "rule": "pip-audit / npm-audit in CI; lockfiles", "verified": false }
+  },
+  "verification": {
+    "_comment": "Resultado de la verificacion DEMOSTRADA (workers la producen, C la re-corre con cerebro fresco, D-032). Nunca declarar true sin la corrida real (eco L-009).",
+    "policy_blocks": false,
+    "_policy_blocks_comment": "true si una violacion de capa (domain→infrastructure) inyectada hace FALLAR el analisis estatico (ancla D2).",
+    "sqli_blocked": false,
+    "_sqli_blocked_comment": "true si SQL crudo fuera del adaptador firmado es BLOQUEADO (ancla D4).",
+    "env_boots": false,
+    "_env_boots_comment": "true si el entorno arranca/compila limpio (D3)."
+  },
+  "scaffold_inventory": [],
+  "_scaffold_inventory_comment": "Lista de los directorios/manifiestos ANDAMIADOS (solo lo aplicable, E4). p.ej. ['src/domain', 'src/application', 'src/infrastructure', 'src/interface', 'app', 'src/features', 'src/components/ui', 'src/lib', 'pyproject.toml', 'package.json', 'docker-compose.yml'].",
+  "change_log": [],
+  "_change_log_comment": "Modo Ajuste (DA-6/D-035). Vacio en Inicio. Una entrada por re-firma vN+1.",
+  "_change_log_item_shape": {
+    "version": 2,
+    "trigger_roadmap_version": 2,
+    "strategy": "green_light | new_mold",
+    "_strategy_comment": "green_light = luz verde sin re-andamiar; new_mold = molde base nuevo provisionado sin reconstruir lo existente.",
+    "added": [],
+    "unchanged": [],
+    "manifest_sha256": null,
+    "at": "<iso8601 real>"
+  },
+  "signature_ref": "harness-state.json -> approvals[] (comando /caden-approve)",
+  "_signature_ref_comment": "Puntero a la FUENTE UNICA de la firma (harness-state.approvals[] de la fase 020), igual que el 010. El manifest NO guarda su propio manifest_hash: un hash no puede contenerse a si mismo (circularidad, L-022/D-039). El HASH DE RECORD del artefacto firmado vive en harness-state.approvals[].manifest_hash (calculado por /caden-approve sobre este manifest YA consolidado); C lo re-verifica contra el manifest en disco (D7). presented_sha256 (mismo approvals[]) traza el draft de CP-03. Una firma REJECTED (tras rework) se anota en approvals[] pero NO cuenta para version (D-021).",
+  "approved": false,
+  "signed_at": null
+}

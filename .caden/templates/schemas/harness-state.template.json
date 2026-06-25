@@ -1,0 +1,44 @@
+{
+  "_comment": "PLANTILLA (plano de construccion, L-001). ESTADO ESTRATEGICO TRANSVERSAL del motor CADEN: UNICO para los 6 arneses (modelo mixto). Es el orquestador maestro y DETERMINA EL HARNESS ACTIVO (current_phase). Escritor unico: A (sesion principal). La instancia se crea en runtime quitando el sufijo .template; los valores <...> son marcadores.",
+  "schema_version": "0.1",
+  "_project_comment": "FUENTE UNICA del nombre del proyecto (T-020). A lo fija en CP-00 desde scope.md; todos los demas artefactos (roadmap-manifest, etc.) lo COPIAN verbatim de aqui. Preserva tildes/acentos del idioma del cliente.",
+  "project": "<nombre del proyecto cliente>",
+  "current_phase": "010_discovery",
+  "_phase_status_enum": ["NOT_STARTED", "INIT", "CONTRACT_APPROVED", "IN_EXECUTION", "EXECUTION_COMPLETE", "IN_AUDIT", "IN_REWORK", "HOLD", "PHASE_COMPLETE"],
+  "_phases_comment": "Solo el arnes 010 esta disenado; los ids 020..060 son provisionales y se confirman al construir cada arnes.",
+  "phases": {
+    "010_discovery":        { "status": "NOT_STARTED", "verdict": null, "execution_state_path": "010_discovery/execution-state.json" },
+    "020_architecture":     { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "030_contract_mold":    { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "040_tactical_planning":{ "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "050_execution":        { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null },
+    "060_validation":       { "status": "NOT_STARTED", "verdict": null, "execution_state_path": null }
+  },
+  "approvals": [],
+  "_approvals_item_shape": {
+    "phase": "<phase_id>",
+    "command": "/caden-approve",
+    "scope": "<alcance firmado, p.ej. roadmap-manifest v1>",
+    "manifest_version": 0,
+    "manifest_hash": "<sha256 del artefacto firmado YA CONSOLIDADO = HASH DE RECORD; C lo re-verifica contra el manifest en disco (D7, integridad del firmado, D-039)>",
+    "presented_sha256": "<sha256 del DRAFT presentado en el gate (= checkpoints['CP-03'].manifest_sha256); traza el delta de consolidacion. Procedencia: /caden-approve la valida al firmar (draft en disco == este valor) ANTES de consolidar (D-024/R2). Puede faltar en firmas antiguas>",
+    "approved_by": "<identidad del firmante derivada de git config: 'user.name <user.email>', o 'humano' si git no esta configurado. FUENTE CONTROLADA: /caden-approve paso 2b lo toma de `git config user.name`/`user.email` (saneado a noreply por S-055), NUNCA del contexto/conocimiento del modelo sobre el operador (L-027)>",
+    "approved_at": "<iso8601>",
+    "audit_result": "PENDING"
+  },
+  "_audit_result_comment": "Resultado de la auditoria de C sobre esta firma (D-021). /caden-approve la crea en PENDING; el playbook paso 6 la fija en APPROVED (fase consolidada) o REJECTED (firma anulada por rework). El versionado cuenta SOLO las APPROVED: version = 1 + nº de approvals[] de la fase con audit_result==APPROVED (asi un rework mantiene v1; D-020/D-021).",
+  "_audit_result_enum": ["PENDING", "APPROVED", "REJECTED"],
+  "escalations": [],
+  "_escalations_item_shape": {
+    "phase": "<phase_id>",
+    "reason": "<motivo del bloqueo>",
+    "raised_at": "<iso8601>",
+    "context": "<contexto completo para el humano>",
+    "resolved": false
+  },
+  "knowledge": {
+    "decisions_library": "705_knowledge/decisions_library.md",
+    "lessons_learned": "705_knowledge/lessons_learned.md"
+  },
+  "updated_at": null
+}
